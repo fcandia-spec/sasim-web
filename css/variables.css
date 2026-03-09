@@ -1,0 +1,56 @@
+/* ═══════════════════════════════════════════════════════════
+   SASIM — Design Tokens (variables.css)
+   Paleta 1: "Claridad Cálida"
+   
+   Este archivo controla TODOS los colores, fuentes y espaciados.
+   Cambiar la paleta = editar solo este archivo.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Fondos ── */
+  --bg:          #0a0a0f;      /* Fondo principal */
+  --bg-card:     #13131c;      /* Fondo de tarjetas */
+  --bg-el:       #1c1c2a;      /* Elementos elevados */
+
+  /* ── Bordes y brillos ── */
+  --border:      rgba(255, 255, 255, 0.07);
+  --bglow:       rgba(232, 168, 56, 0.28);
+
+  /* ── Texto ── */
+  --tp:          #F5F0EB;      /* Texto primario */
+  --tm:          #94A3B8;      /* Texto medio / secundario */
+  --tf:          #3a3a52;      /* Texto apagado / muted */
+
+  /* ── Acentos ── */
+  --acc:         #E8A838;      /* Primario — ámbar cálido */
+  --acc-s:       rgba(232, 168, 56, 0.12);   /* Sutil */
+  --acc-g:       rgba(232, 168, 56, 0.22);   /* Glow / sombra */
+  --acc2:        #3B82F6;      /* Secundario — azul */
+  --acc3:        #22C55E;      /* Éxito — verde */
+  --danger:      #EF4444;      /* Error / peligro */
+
+  /* ── Colores de categorías (tags) ── */
+  --tag-dibujo-bg:   rgba(239, 68, 68, 0.15);
+  --tag-dibujo-txt:  #F87171;
+  --tag-ia-bg:       rgba(34, 197, 94, 0.15);
+  --tag-ia-txt:      #4ADE80;
+  --tag-familia-bg:  rgba(232, 168, 56, 0.15);
+  --tag-familia-txt: #E8A838;
+  --tag-tech-bg:     rgba(139, 92, 246, 0.15);
+  --tag-tech-txt:    #A78BFA;
+
+  /* ── Tipografía ── */
+  --fd:          'Outfit', sans-serif;    /* Display / headings */
+  --fb:          'Nunito', sans-serif;    /* Body / párrafos */
+
+  /* ── Espaciados ── */
+  --nav-h:       66px;
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-full: 100px;
+
+  /* ── Transiciones ── */
+  --tr:          all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --tr-fast:     all 0.15s ease;
+}

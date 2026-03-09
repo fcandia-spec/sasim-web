@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SASIM — Panel Admin</title>
+
+  <!-- Fuentes: Outfit (títulos) + Nunito (cuerpo) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+
+  <!-- Estilos: tokens compartidos + estilos admin -->
+  <link rel="stylesheet" href="css/variables.css"/>
+  <link rel="stylesheet" href="css/admin.css"/>
+</head>
+<body>
+
+  <!-- ═══ PANTALLA: LOGIN ═══ -->
+  <div id="login-screen" class="login-screen" style="display:none">
+    <div class="login-box">
+      <div class="login-logo">SASIM</div>
+      <div class="login-sub">Sabiduría Simple</div>
+      <h2 class="login-title">Panel de Administración</h2>
+      <p class="login-desc">Acceso restringido. Inicia sesión con tu cuenta de Google autorizada.</p>
+      <button class="btn-google" id="btn-google-login">
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.7 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.7 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.6-.4-3.9z"/>
+          <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.1 6.7 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+          <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.3 35.3 26.8 36 24 36c-5.3 0-9.7-3.3-11.4-8H6.2C9.6 35.6 16.3 44 24 44z"/>
+          <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.6l6.2 5.2C36.9 39.4 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/>
+        </svg>
+        Continuar con Google
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ PANTALLA: ACCESO DENEGADO ═══ -->
+  <div id="denied-screen" class="denied-screen" style="display:none">
+    <div class="denied-icon">🔒</div>
+    <h2 class="denied-title">Acceso denegado</h2>
+    <p class="denied-desc">Tu cuenta no tiene permisos de administrador.</p>
+    <button class="btn-secondary" id="btn-denied-logout" style="margin-top:8px">Cerrar sesión</button>
+  </div>
+
+  <!-- ═══ PANEL ADMIN ═══ -->
+  <div id="admin-panel" style="display:none">
+
+    <!-- Nav superior -->
+    <nav class="nav">
+      <div class="nav-left">
+        <span class="nav-logo">SASIM</span>
+        <span class="nav-badge">Admin</span>
+      </div>
+      <div class="nav-right">
+        <img class="user-photo" id="user-photo" src="" alt=""/>
+        <span class="user-name" id="user-name"></span>
+        <button class="btn-logout" id="btn-logout">Salir</button>
+      </div>
+    </nav>
+
+    <div class="admin-layout">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-label">Contenido</div>
+          <button class="sidebar-link active" data-section="dashboard"><span>📊</span> Dashboard</button>
+          <button class="sidebar-link" data-section="videos"><span>🎬</span> Videos</button>
+          <button class="sidebar-link" data-section="posts"><span>✍️</span> Blog / Posts</button>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Gestión</div>
+          <button class="sidebar-link" data-section="users"><span>👥</span> Usuarios</button>
+        </div>
+        <div class="sidebar-section">
+          <div class="sidebar-label">Sitio</div>
+          <button class="sidebar-link" onclick="window.open('/','_blank')"><span>🌐</span> Ver SASIM</button>
+        </div>
+      </aside>
+
+      <!-- Contenido principal -->
+      <main class="main-content">
+
+        <!-- DASHBOARD -->
+        <div class="section active" id="section-dashboard">
+          <div class="page-header">
+            <h1 class="page-title">Bienvenido al <span>panel</span></h1>
+            <p class="page-desc">Resumen general de SASIM</p>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-num" id="stat-videos">—</div><div class="stat-lbl">Videos</div></div>
+            <div class="stat-card"><div class="stat-num" id="stat-posts">—</div><div class="stat-lbl">Posts</div></div>
+            <div class="stat-card"><div class="stat-num" id="stat-users">—</div><div class="stat-lbl">Usuarios</div></div>
+            <div class="stat-card"><div class="stat-num" id="stat-likes">—</div><div class="stat-lbl">Likes totales</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">⚡ Accesos rápidos</div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn-primary" onclick="goSection('videos')">+ Subir video</button>
+              <button class="btn-secondary" onclick="goSection('posts')">+ Nuevo post</button>
+              <button class="btn-secondary" onclick="goSection('users')">Ver usuarios</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIDEOS -->
+        <div class="section" id="section-videos">
+          <div class="page-header">
+            <h1 class="page-title"><span>Videos</span></h1>
+            <p class="page-desc">Sube y administra el contenido de video</p>
+          </div>
+          <div class="panel">
+            <div class="panel-title">⬆ Subir nuevo video</div>
+            <div class="form-grid">
+              <div class="fg">
+                <label class="flabel">Título</label>
+                <input class="finput" id="vt" placeholder="Ej: Cap. 1 — El Arte de Dibujar"/>
+              </div>
+              <div class="fg">
+                <label class="flabel">Categoría</label>
+                <select class="fselect" id="vtag">
+                  <option value="familia">Familia</option>
+                  <option value="dibujo">Dibujo</option>
+                  <option value="ia">IA</option>
+                  <option value="tech">Tech</option>
+                </select>
+              </div>
+              <div class="fg">
+                <label class="flabel">Archivo de video (privado)</label>
+                <input type="file" class="finput" id="vfile" accept="video/*" style="padding:8px"/>
+              </div>
+              <div class="fg">
+                <label class="flabel">Miniatura (imagen)</label>
+                <input type="file" class="finput" id="vthumb" accept="image/*" style="padding:8px"/>
+              </div>
+              <div class="fg">
+                <label class="flabel">O YouTube ID (público)</label>
+                <input class="finput" id="vyt" placeholder="dQw4w9WgXcQ (opcional)"/>
+              </div>
+              <div class="fg">
+                <label class="flabel">Duración</label>
+                <input class="finput" id="vdur" placeholder="8:42"/>
+              </div>
+              <div class="fg">
+                <label class="flabel">Emoji</label>
+                <input class="finput" id="vem" placeholder="🎬" maxlength="2"/>
+              </div>
+              <div class="fg full">
+                <label class="flabel">Descripción</label>
+                <textarea class="ftextarea" id="vdesc"></textarea>
+              </div>
+              <div class="fg">
+                <label class="premium-check">
+                  <input type="checkbox" id="vpremium" checked/>
+                  Contenido premium (solo suscriptores)
+                </label>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-primary" id="btn-save-video">Guardar video</button>
+              <button class="btn-secondary" id="btn-clear-video">Limpiar</button>
+              <span class="save-ok" id="video-ok">✓ Video guardado</span>
+            </div>
+            <div class="upload-progress" id="upload-progress">
+              <div class="upload-bar-wrap">
+                <div class="upload-bar" id="upload-bar"></div>
+              </div>
+              <span class="upload-status" id="upload-status">Subiendo...</span>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">📋 Videos publicados</div>
+            <div id="videos-table-wrap"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+          </div>
+        </div>
+
+        <!-- POSTS -->
+        <div class="section" id="section-posts">
+          <div class="page-header">
+            <h1 class="page-title"><span>Blog</span> / Posts</h1>
+            <p class="page-desc">Publica y administra los posts del muro</p>
+          </div>
+          <div class="panel">
+            <div class="panel-title">✍️ Nuevo post</div>
+            <div class="form-grid">
+              <div class="fg">
+                <label class="flabel">Categoría</label>
+                <select class="fselect" id="ptag">
+                  <option value="familia">Familia</option>
+                  <option value="dibujo">Dibujo</option>
+                  <option value="ia">IA</option>
+                  <option value="tech">Tech</option>
+                </select>
+              </div>
+              <div class="fg full">
+                <label class="flabel">Contenido</label>
+                <textarea class="ftextarea" id="ptext" style="min-height:120px"></textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn-primary" id="btn-save-post">Publicar</button>
+              <span class="save-ok" id="post-ok">✓ Post publicado</span>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">📋 Posts publicados</div>
+            <div id="posts-table-wrap"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+          </div>
+        </div>
+
+        <!-- USUARIOS -->
+        <div class="section" id="section-users">
+          <div class="page-header">
+            <h1 class="page-title"><span>Usuarios</span></h1>
+            <p class="page-desc">Gestiona roles y accesos</p>
+          </div>
+          <div class="panel">
+            <div class="panel-title">👥 Usuarios registrados</div>
+            <div id="users-table-wrap"><div class="loading"><div class="spinner"></div>Cargando...</div></div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/admin.js"></script>
+
+  <!-- Cloudflare Web Analytics -->
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "60cc644d602f4e938f60e38d3eb81320"}'></script>
+</body>
+</html>
