@@ -78,7 +78,7 @@
   document.getElementById('btn-google-login').onclick = function() {
     sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://sasim-2g5.pages.dev/admin.html' }
+      options: { redirectTo: 'https://sasim-web.pages.dev/admin.html' }
     });
   };
 

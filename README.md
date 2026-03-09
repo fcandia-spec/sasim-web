@@ -32,4 +32,4 @@ Plataforma educativa con contenido sobre tecnología, familia y aprendizaje.
 ## Deploy
 Cada push a `main` se despliega automáticamente en Cloudflare Pages.
 
-**URL producción:** https://sasim-2g5.pages.dev
+**URL producción:** https://sasim-web.pages.dev

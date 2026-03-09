@@ -57,7 +57,7 @@ function loginGoogle() {
   _sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'https://sasim-2g5.pages.dev',
+      redirectTo: 'https://sasim-web.pages.dev',
       queryParams: { prompt: 'select_account' }
     }
   });
