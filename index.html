@@ -38,8 +38,10 @@
 
     <div class="nav-actions">
       <a id="admin-link" class="nav-admin-link" href="admin.html">⚙ Admin</a>
-      <button id="auth-btn" class="btn-auth" onclick="loginGoogle()">Iniciar sesión</button>
       <button id="sub-btn" class="btn-subscribe" onclick="suscribirse()">Suscribirse</button>
+      <button id="auth-btn" class="btn-auth" onclick="loginGoogle()">Iniciar sesión</button>
+      <img id="profile-photo" class="nav-profile-photo" src="" alt="" onclick="go('perfil')" style="display:none"/>
+      <button id="logout-btn" class="btn-logout-nav" onclick="logout()" style="display:none">Salir</button>
     </div>
   </nav>
 
@@ -51,14 +53,6 @@
         <div class="hero-badge">✦ Sabiduría Simple</div>
         <h1 class="hero-title"><span class="grad">SASIM</span></h1>
         <p class="hero-tagline">Tecnología · Familia · Aprendizaje</p>
-
-        <div class="acro-row">
-          <div class="aw"><strong>S</strong> Sueña</div>
-          <div class="aw"><strong>A</strong> Aprende</div>
-          <div class="aw"><strong>S</strong> Siente</div>
-          <div class="aw"><strong>I</strong> Imagina</div>
-          <div class="aw"><strong>M</strong> Multiplica</div>
-        </div>
 
         <p class="hero-desc">
           Con la tecnología cada vez más potente, tu hijo podría ser la próxima gran mente.<br>

@@ -73,18 +73,30 @@ function logout() {
 // ═══ ACTUALIZAR UI SEGÚN AUTH ═══
 
 function updateAuthUI() {
-  var btn = document.getElementById('auth-btn');
+  var authBtn = document.getElementById('auth-btn');
   var adminLink = document.getElementById('admin-link');
   var subBtn = document.getElementById('sub-btn');
-  if (!btn) return;
+  var profilePhoto = document.getElementById('profile-photo');
+  var logoutBtn = document.getElementById('logout-btn');
+  if (!authBtn) return;
 
   if (_user) {
-    var name = 'Usuario';
-    if (_user.user_metadata && _user.user_metadata.full_name) {
-      name = _user.user_metadata.full_name.split(' ')[0];
+    // Ocultar botón de login, mostrar foto + salir
+    authBtn.style.display = 'none';
+
+    // Mostrar foto de perfil
+    if (profilePhoto) {
+      var photoUrl = (_user.user_metadata && _user.user_metadata.avatar_url) || '';
+      if (photoUrl) {
+        profilePhoto.src = photoUrl;
+        profilePhoto.style.display = 'block';
+      } else {
+        profilePhoto.style.display = 'none';
+      }
     }
-    btn.textContent = 'Salir (' + name + ')';
-    btn.onclick = logout;
+
+    // Mostrar botón salir
+    if (logoutBtn) logoutBtn.style.display = 'inline-block';
 
     // Consultar rol del usuario
     _sb.from('users').select('role').eq('id', _user.id).single().then(function(result) {
@@ -108,8 +120,12 @@ function updateAuthUI() {
       }
     });
   } else {
-    btn.textContent = 'Iniciar sesión';
-    btn.onclick = loginGoogle;
+    // No autenticado: mostrar botón login, ocultar lo demás
+    authBtn.style.display = 'inline-block';
+    authBtn.textContent = 'Iniciar sesión';
+    authBtn.onclick = loginGoogle;
+    if (profilePhoto) profilePhoto.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'none';
     if (adminLink) adminLink.style.display = 'none';
     if (subBtn) subBtn.style.display = 'none';
   }
