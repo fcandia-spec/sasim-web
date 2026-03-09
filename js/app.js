@@ -34,6 +34,7 @@ function go(page) {
   // Renderizar contenido de la página si es necesario
   if (page === 'videos') renderVideos();
   if (page === 'blog') renderBlog();
+  if (page === 'perfil') renderProfile();
 
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -309,6 +310,182 @@ function publishPost() {
   selectedTag = '';
   renderBlog();
 }
+
+
+// ═══ PÁGINA DE PERFIL ═══
+
+function renderProfile() {
+  var inner = document.getElementById('profile-inner');
+  if (!inner) return;
+
+  // Si no hay usuario, mostrar mensaje
+  if (!_user) {
+    inner.innerHTML =
+      '<div class="profile-empty" style="margin-top:40px">' +
+        '<div class="profile-empty-icon">🔒</div>' +
+        '<div class="profile-empty-text">Inicia sesión para ver tu perfil</div>' +
+        '<button class="profile-action" onclick="loginGoogle()" style="margin-top:16px">Iniciar sesión</button>' +
+      '</div>';
+    return;
+  }
+
+  var name = (_user.user_metadata && _user.user_metadata.full_name) || 'Usuario';
+  var email = _user.email || '';
+  var photo = (_user.user_metadata && _user.user_metadata.avatar_url) || '';
+  var role = _userRole || 'visitor';
+  var roleLabel = role === 'admin' ? 'Admin' : (role === 'subscriber' ? 'Suscriptor' : 'Visitante');
+  var roleClass = role === 'admin' ? 'role-admin-badge' : (role === 'subscriber' ? 'role-sub-badge' : 'role-visitor-badge');
+
+  var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  var isLight = currentTheme === 'light';
+
+  // Header del perfil
+  var headerHtml =
+    '<div class="profile-header">' +
+      (photo ? '<img class="profile-avatar" src="' + escapeHTML(photo) + '" alt=""/>' : '') +
+      '<div class="profile-info">' +
+        '<div class="profile-name">' + escapeHTML(name) + '</div>' +
+        '<div class="profile-email">' + escapeHTML(email) + '</div>' +
+        '<span class="profile-role ' + roleClass + '">' + roleLabel + '</span>' +
+      '</div>' +
+    '</div>';
+
+  // Sección: Progreso de videos
+  var progressHtml =
+    '<div class="profile-section">' +
+      '<div class="profile-section-title"><span>▶</span> Mi progreso</div>' +
+      '<div class="progress-grid" id="progress-grid">' +
+        '<div class="profile-empty"><div class="profile-empty-icon">📚</div><div class="profile-empty-text">Cargando progreso...</div></div>' +
+      '</div>' +
+    '</div>';
+
+  // Sección: Mis publicaciones (posts del blog)
+  var myPostsHtml =
+    '<div class="profile-section">' +
+      '<div class="profile-section-title"><span>✍</span> Mis publicaciones</div>' +
+      '<div id="my-posts-feed">';
+
+  if (POSTS.length > 0) {
+    myPostsHtml += POSTS.slice(0, 5).map(postCard).join('');
+  } else {
+    myPostsHtml += '<div class="profile-empty"><div class="profile-empty-icon">📝</div><div class="profile-empty-text">Aún no hay publicaciones</div></div>';
+  }
+
+  myPostsHtml +=
+      '</div>' +
+      '<button class="profile-action" onclick="go(\'blog\')">Ir al blog →</button>' +
+    '</div>';
+
+  // Sección: Configuración
+  var settingsHtml =
+    '<div class="profile-section">' +
+      '<div class="profile-section-title"><span>⚙</span> Configuración</div>' +
+      '<div class="settings-panel">' +
+        '<div class="setting-row">' +
+          '<div>' +
+            '<div class="setting-label">Tema</div>' +
+            '<div class="setting-desc">' + (isLight ? 'Naturaleza Educativa (claro)' : 'Claridad Cálida (oscuro)') + '</div>' +
+          '</div>' +
+          '<button class="theme-toggle' + (isLight ? ' light' : '') + '" onclick="toggleTheme()" title="Cambiar tema"></button>' +
+        '</div>' +
+        '<div class="setting-row">' +
+          '<div>' +
+            '<div class="setting-label">Cuenta</div>' +
+            '<div class="setting-desc">' + escapeHTML(email) + '</div>' +
+          '</div>' +
+          '<button class="btn-logout-nav" onclick="logout()">Cerrar sesión</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  inner.innerHTML = headerHtml + progressHtml + myPostsHtml + settingsHtml;
+
+  // Cargar progreso de videos de forma asíncrona
+  loadVideoProgress();
+}
+
+// ═══ CARGAR PROGRESO DE VIDEOS ═══
+
+async function loadVideoProgress() {
+  var grid = document.getElementById('progress-grid');
+  if (!grid || !_user || !_sb) return;
+
+  try {
+    var result = await _sb.from('video_progress').select('*').eq('user_id', _user.id);
+    var progressData = result.data || [];
+
+    if (progressData.length === 0 && VIDEOS.length === 0) {
+      grid.innerHTML = '<div class="profile-empty"><div class="profile-empty-icon">🎬</div><div class="profile-empty-text">Aún no has visto ningún video</div><button class="profile-action" onclick="go(\'videos\')">Explorar videos →</button></div>';
+      return;
+    }
+
+    // Combinar datos de progreso con datos de videos
+    var cards = '';
+    var completedCount = 0;
+
+    if (VIDEOS.length > 0) {
+      cards = VIDEOS.map(function(v) {
+        var prog = progressData.find(function(p) { return p.video_id === v.id; });
+        var seconds = prog ? prog.seconds : 0;
+        var completed = prog ? prog.completed : false;
+        if (completed) completedCount++;
+
+        // Calcular porcentaje (estimación basada en duración si existe)
+        var percent = 0;
+        if (completed) {
+          percent = 100;
+        } else if (seconds > 0 && v.dur) {
+          var parts = v.dur.split(':');
+          var totalSecs = parts.length === 2 ? (parseInt(parts[0]) * 60 + parseInt(parts[1])) : 0;
+          if (totalSecs > 0) percent = Math.min(Math.round((seconds / totalSecs) * 100), 99);
+        }
+
+        return '<div class="progress-card">' +
+          '<div class="progress-card-title">' + escapeHTML(v.title) + '</div>' +
+          '<div class="progress-bar-wrap">' +
+            '<div class="progress-bar-fill" style="width:' + percent + '%"></div>' +
+          '</div>' +
+          '<div class="progress-label">' +
+            '<span>' + (completed ? '<span class="progress-completed">✓ Completado</span>' : (seconds > 0 ? Math.floor(seconds / 60) + ' min vistos' : 'Sin empezar')) + '</span>' +
+            '<span>' + percent + '%</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    } else {
+      cards = '<div class="profile-empty"><div class="profile-empty-icon">🎬</div><div class="profile-empty-text">No hay videos disponibles aún</div></div>';
+    }
+
+    grid.innerHTML = cards;
+
+  } catch (e) {
+    console.warn('Error cargando progreso:', e);
+    grid.innerHTML = '<div class="profile-empty"><div class="profile-empty-text">Error al cargar progreso</div></div>';
+  }
+}
+
+// ═══ TOGGLE DE TEMA (Dark ↔ Light) ═══
+
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme');
+  var next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-theme', next);
+
+  // Guardar preferencia (sin localStorage, usamos cookie simple)
+  document.cookie = 'sasim-theme=' + next + ';path=/;max-age=31536000';
+
+  // Re-renderizar perfil para actualizar el toggle
+  if (currentPage === 'perfil') renderProfile();
+}
+
+// Restaurar tema guardado al cargar
+function restoreTheme() {
+  var match = document.cookie.match(/sasim-theme=(\w+)/);
+  if (match && match[1] === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+}
+restoreTheme();
 
 
 // ═══ INICIALIZACIÓN ═══
