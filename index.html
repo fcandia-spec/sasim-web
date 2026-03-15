@@ -1,151 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SASIM — Sabiduría Simple</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="css/variables.css"/>
-  <link rel="stylesheet" href="css/main.css"/>
-  <link rel="manifest" href="/manifest.json"/>
-  <meta name="theme-color" content="#E8A838"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <link rel="apple-touch-icon" href="/icon-192.png"/>
-</head>
-<body>
-
-  <!-- ═══ NAVEGACIÓN ═══ -->
-  <nav class="nav">
-    <a class="nav-logo" href="#" onclick="go('inicio');return false;">
-      <div class="logo-mark">SA</div>
-      <span>SASIM</span>
-    </a>
-
-    <div class="nav-links">
-      <a class="nav-link active" href="#" id="nl-inicio" onclick="go('inicio');return false;">Inicio</a>
-      <a class="nav-link" href="#" id="nl-cursos" onclick="go('cursos');return false;">Cursos</a>
-      <a class="nav-link" href="#" id="nl-blog" onclick="go('blog');return false;">Blog</a>
-      <a class="nav-link" href="#" id="nl-juegos" onclick="go('juegos');return false;">Juegos</a>
-      <a class="nav-link" href="#" id="nl-nosotros" onclick="go('nosotros');return false;">Nosotros</a>
-    </div>
-
-    <div class="nav-actions">
-      <a id="admin-link" class="nav-admin-link" href="admin.html">⚙ Admin</a>
-      <button id="sub-btn" class="btn-subscribe" onclick="go('suscribirse')">Suscribirse</button>
-      <button id="auth-btn" class="btn-auth" onclick="loginGoogle()">Iniciar sesión</button>
-      <img id="profile-photo" class="nav-profile-photo" src="" alt="" onclick="go('perfil')" style="display:none"/>
-      <button id="logout-btn" class="btn-logout-nav" onclick="logout()" style="display:none">Salir</button>
-    </div>
-  </nav>
-
-  <!-- ═══ PÁGINA: INICIO ═══ -->
-  <div class="page active" id="page-inicio">
-    <section class="hero">
-      <div class="hero-bg"></div>
-      <div class="hero-content">
-        <div class="hero-badge">✦ Sabiduría Simple</div>
-        <h1 class="hero-title"><span class="grad">SASIM</span></h1>
-        <p class="hero-tagline">Tecnología · Familia · Aprendizaje</p>
-        <p class="hero-desc">
-          Con la tecnología cada vez más potente, tu hijo podría ser la próxima gran mente.<br>
-          <em>Podrías creerlo, si creyeras en ti.</em>
-        </p>
-        <div class="cta-row">
-          <button class="btn-p" onclick="go('cursos')">Explorar cursos →</button>
-          <button class="btn-s" onclick="go('blog')">Leer el blog</button>
-        </div>
-      </div>
-    </section>
-    <div class="stats">
-      <div class="stat"><div class="stat-n">7</div><div class="stat-l">Cursos</div></div>
-      <div class="stat"><div class="stat-n">3</div><div class="stat-l">Juegos</div></div>
-      <div class="stat"><div class="stat-n">2</div><div class="stat-l">Planes</div></div>
-      <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Posibilidades</div></div>
-    </div>
-    <section class="gal-section" id="gal"></section>
-  </div>
-
-  <!-- ═══ PÁGINA: CURSOS ═══ -->
-  <div class="page" id="page-cursos">
-    <div class="pg-container" id="cursos-inner"></div>
-  </div>
-
-  <!-- ═══ PÁGINA: BLOG ═══ -->
-  <div class="page" id="page-blog">
-    <div class="bpage" id="bpage-inner"></div>
-  </div>
-
-  <!-- ═══ PÁGINA: JUEGOS ═══ -->
-  <div class="page" id="page-juegos">
-    <div class="pg-container" id="juegos-inner"></div>
-  </div>
-
-  <!-- ═══ PÁGINA: SOBRE NOSOTROS ═══ -->
-  <div class="page" id="page-nosotros">
-    <div class="pg-container" id="nosotros-inner"></div>
-  </div>
-
-  <!-- ═══ PÁGINA: SUSCRIBIRSE ═══ -->
-  <div class="page" id="page-suscribirse">
-    <div class="pg-container" id="suscribirse-inner"></div>
-  </div>
-
-  <!-- ═══ PÁGINA: CONOCE MÁS ═══ -->
-  <div class="page" id="page-conocemas">
-    <div class="pg-container" id="conocemas-inner"></div>
-  </div>
-
-  <!-- ═══ PÁGINA: PERFIL ═══ -->
-  <div class="page" id="page-perfil">
-    <div class="pg-container" id="profile-inner"></div>
-  </div>
-
-  <!-- ═══ FOOTER ═══ -->
-  <footer class="site-footer" id="site-footer">
-    <div class="footer-inner">
-      <div class="footer-col">
-        <div class="footer-brand">SASIM</div>
-        <p class="footer-desc">Sabiduría Simple — Tecnología, familia y aprendizaje para un mundo en constante evolución.</p>
-      </div>
-      <div class="footer-col">
-        <div class="footer-title">Explorar</div>
-        <a href="#" onclick="go('cursos');return false;">Cursos</a>
-        <a href="#" onclick="go('blog');return false;">Blog</a>
-        <a href="#" onclick="go('juegos');return false;">Juegos</a>
-      </div>
-      <div class="footer-col">
-        <div class="footer-title">SASIM</div>
-        <a href="#" onclick="go('nosotros');return false;">Sobre nosotros</a>
-        <a href="#" onclick="go('conocemas');return false;">Políticas y privacidad</a>
-        <a href="#" onclick="go('suscribirse');return false;">Planes</a>
-      </div>
-    </div>
-    <div class="footer-bottom">© 2026 SASIM — Sabiduría Simple. Todos los derechos reservados.</div>
-  </footer>
-
-  <!-- ═══ MODAL DE VIDEO ═══ -->
-  <div class="modal" id="modal" onclick="closeModal(event)">
-    <div class="mbox" onclick="event.stopPropagation()">
-      <div class="mhead">
-        <span class="mtitle" id="mtitle"></span>
-        <button class="mclose" onclick="closeModal()">✕</button>
-      </div>
-      <div class="mvideo" id="mvideo"></div>
-      <div class="minfo"><p class="mdesc" id="mdesc"></p></div>
-    </div>
-  </div>
-
-  <!-- ═══ SCRIPTS ═══ -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/video-player.js"></script>
-  <script src="https://sdk.mercadopago.com/js/v2"></script>
-  <script src="js/mercadopago.js"></script>
-  <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }</script>
-  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "60cc644d602f4e938f60e38d3eb81320"}'></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SASIM — Sabiduría Simple</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#E8A838" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "60cc644d602f4e938f60e38d3eb81320"}'></script>
+  </body>
 </html>
