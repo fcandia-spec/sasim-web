@@ -1,5 +1,6 @@
 import { useAuth } from '@/context/AuthContext';
 import { ExpandableTabs } from '@/components/ui/expandable-tabs';
+import ProfileMenu from '@/components/ProfileMenu';
 import { Home, BookOpen, Pen, Gamepad2, Users } from 'lucide-react';
 
 interface NavProps {
@@ -17,8 +18,7 @@ const NAV_TABS = [
 ];
 
 export default function Nav({ page, onNavigate }: NavProps) {
-  const { user, role, login, logout } = useAuth();
-  const photo = user?.user_metadata?.avatar_url || '';
+  const { user, role, login } = useAuth();
 
   return (
     <nav style={{
@@ -60,32 +60,13 @@ export default function Nav({ page, onNavigate }: NavProps) {
             border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)',
           }}>⚙</a>
         )}
-        {role === 'visitor' && user && (
-          <button onClick={() => onNavigate('suscribirse')} style={{
-            padding: '7px 18px', borderRadius: 9,
-            background: 'linear-gradient(135deg,#009ee3,#00b4d8)',
-            color: '#fff', fontWeight: 800, fontSize: '0.82rem',
-          }}>Suscribirse</button>
-        )}
         {!user ? (
           <button onClick={login} style={{
             padding: '7px 18px', borderRadius: 9, background: 'var(--acc)',
             color: 'var(--bg)', fontWeight: 800, fontSize: '0.82rem',
           }}>Iniciar sesión</button>
         ) : (
-          <>
-            {photo && (
-              <img src={photo} alt="" onClick={() => onNavigate('perfil')} style={{
-                width: 34, height: 34, borderRadius: '50%', border: '2px solid var(--acc)',
-                cursor: 'pointer', objectFit: 'cover',
-              }} />
-            )}
-            <button onClick={logout} style={{
-              padding: '5px 14px', borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border)', fontSize: '0.78rem',
-              fontWeight: 700, color: 'var(--tm)',
-            }}>Salir</button>
-          </>
+          <ProfileMenu onNavigate={onNavigate} />
         )}
       </div>
     </nav>
