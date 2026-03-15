@@ -1,16 +1,19 @@
 import { useAuth } from '@/context/AuthContext';
+import { ExpandableTabs } from '@/components/ui/expandable-tabs';
+import { Home, BookOpen, Pen, Gamepad2, Users } from 'lucide-react';
 
 interface NavProps {
   page: string;
   onNavigate: (page: string) => void;
 }
 
-const NAV_LINKS = [
-  { id: 'inicio', label: 'Inicio' },
-  { id: 'cursos', label: 'Cursos' },
-  { id: 'blog', label: 'Blog' },
-  { id: 'juegos', label: 'Juegos' },
-  { id: 'nosotros', label: 'Nosotros' },
+const NAV_TABS = [
+  { id: 'inicio', title: 'Inicio', icon: Home },
+  { id: 'cursos', title: 'Cursos', icon: BookOpen },
+  { id: 'blog', title: 'Blog', icon: Pen },
+  { type: 'separator' as const },
+  { id: 'juegos', title: 'Juegos', icon: Gamepad2 },
+  { id: 'nosotros', title: 'Nosotros', icon: Users },
 ];
 
 export default function Nav({ page, onNavigate }: NavProps) {
@@ -21,14 +24,15 @@ export default function Nav({ page, onNavigate }: NavProps) {
     <nav style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
       height: 'var(--nav-h)', display: 'flex', alignItems: 'center',
-      justifyContent: 'space-between', padding: '0 32px',
+      justifyContent: 'space-between', padding: '0 24px',
       background: 'rgba(10,10,15,0.88)', backdropFilter: 'blur(20px)',
       borderBottom: '1px solid var(--border)',
     }}>
+      {/* Logo */}
       <a onClick={() => onNavigate('inicio')} style={{
         display: 'flex', alignItems: 'center', gap: 11, cursor: 'pointer',
         fontFamily: 'var(--fd)', fontWeight: 900, fontSize: '1.55rem',
-        letterSpacing: '-0.02em', transition: 'var(--tr)',
+        letterSpacing: '-0.02em',
       }}>
         <div style={{
           width: 38, height: 38, borderRadius: 9, background: 'var(--acc)',
@@ -40,51 +44,46 @@ export default function Nav({ page, onNavigate }: NavProps) {
         <span>SASIM</span>
       </a>
 
-      <div style={{ display: 'flex', gap: 3 }}>
-        {NAV_LINKS.map(link => (
-          <a key={link.id} onClick={() => onNavigate(link.id)} style={{
-            padding: '7px 16px', borderRadius: 'var(--radius-sm)',
-            fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer',
-            color: page === link.id ? 'var(--acc)' : 'var(--tm)',
-            background: page === link.id ? 'var(--acc-s)' : 'transparent',
-            transition: 'var(--tr)',
-          }}>{link.label}</a>
-        ))}
-      </div>
+      {/* Expandable Tabs */}
+      <ExpandableTabs
+        tabs={NAV_TABS}
+        activeId={page}
+        onChange={(id) => onNavigate(id)}
+      />
 
+      {/* Actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {role === 'admin' && (
           <a href="admin.html" style={{
-            fontSize: '0.82rem', fontWeight: 800, color: 'var(--danger)',
-            padding: '6px 14px', borderRadius: 'var(--radius-sm)',
+            fontSize: '0.78rem', fontWeight: 800, color: 'var(--danger)',
+            padding: '5px 12px', borderRadius: 'var(--radius-sm)',
             border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)',
-          }}>⚙ Admin</a>
+          }}>⚙</a>
         )}
         {role === 'visitor' && user && (
           <button onClick={() => onNavigate('suscribirse')} style={{
-            padding: '8px 20px', borderRadius: 9,
+            padding: '7px 18px', borderRadius: 9,
             background: 'linear-gradient(135deg,#009ee3,#00b4d8)',
-            color: '#fff', fontWeight: 800, fontSize: '0.88rem',
+            color: '#fff', fontWeight: 800, fontSize: '0.82rem',
           }}>Suscribirse</button>
         )}
         {!user ? (
           <button onClick={login} style={{
-            padding: '8px 20px', borderRadius: 9, background: 'var(--acc)',
-            color: 'var(--bg)', fontWeight: 800, fontSize: '0.88rem',
-            transition: 'var(--tr)',
+            padding: '7px 18px', borderRadius: 9, background: 'var(--acc)',
+            color: 'var(--bg)', fontWeight: 800, fontSize: '0.82rem',
           }}>Iniciar sesión</button>
         ) : (
           <>
             {photo && (
               <img src={photo} alt="" onClick={() => onNavigate('perfil')} style={{
-                width: 36, height: 36, borderRadius: '50%', border: '2px solid var(--acc)',
-                cursor: 'pointer', objectFit: 'cover', transition: 'var(--tr)',
+                width: 34, height: 34, borderRadius: '50%', border: '2px solid var(--acc)',
+                cursor: 'pointer', objectFit: 'cover',
               }} />
             )}
             <button onClick={logout} style={{
-              padding: '6px 16px', borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border)', fontSize: '0.8rem',
-              fontWeight: 700, color: 'var(--tm)', transition: 'var(--tr)',
+              padding: '5px 14px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border)', fontSize: '0.78rem',
+              fontWeight: 700, color: 'var(--tm)',
             }}>Salir</button>
           </>
         )}

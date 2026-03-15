@@ -6,7 +6,7 @@ interface HeartFavoriteProps {
   count?: number;
   liked?: boolean;
   onToggle?: (isLiked: boolean) => void;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
 }
 
 export function HeartFavorite({ count = 0, liked = false, onToggle, size = "md" }: HeartFavoriteProps) {
@@ -20,49 +20,51 @@ export function HeartFavorite({ count = 0, liked = false, onToggle, size = "md" 
     onToggle?.(next);
   }
 
-  const iconSize = size === "sm" ? "h-5 w-5" : "h-6 w-6";
-  const padding = size === "sm" ? "p-2" : "p-3";
-  const fontSize = size === "sm" ? "0.78rem" : "0.88rem";
+  const sizes = {
+    sm: { icon: 20, pad: 8, font: "0.82rem" },
+    md: { icon: 26, pad: 10, font: "0.92rem" },
+    lg: { icon: 32, pad: 12, font: "1rem" },
+  };
+  const s = sizes[size];
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
       <motion.button
         onClick={handleClick}
-        whileTap={{ scale: 0.85 }}
+        whileTap={{ scale: 0.8 }}
         style={{
           borderRadius: "50%",
-          padding: 0,
-          background: "transparent",
+          padding: s.pad,
+          background: isLiked ? "rgba(239,68,68,0.1)" : "transparent",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           transition: "background 0.2s",
+          cursor: "pointer",
+          border: "none",
         }}
-        className={padding}
       >
         <motion.div
-          animate={{ scale: isLiked ? [1, 1.35, 1] : 1 }}
+          animate={{ scale: isLiked ? [1, 1.4, 1] : 1 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
           <Heart
-            className={`${iconSize} transition-colors duration-200 ${
-              isLiked ? "fill-red-500 text-red-500" : ""
-            }`}
-            style={{ color: isLiked ? "#EF4444" : "var(--tf)" }}
+            size={s.icon}
+            style={{ color: isLiked ? "#EF4444" : "var(--tf)", transition: "color 0.2s" }}
             fill={isLiked ? "#EF4444" : "none"}
           />
         </motion.div>
       </motion.button>
       <motion.span
         key={displayCount}
-        initial={{ y: -8, opacity: 0 }}
+        initial={{ y: -6, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.2 }}
         style={{
-          fontSize,
+          fontSize: s.font,
           fontWeight: 700,
           color: isLiked ? "#EF4444" : "var(--tf)",
-          minWidth: 16,
+          minWidth: 18,
           transition: "color 0.2s",
         }}
       >
