@@ -1,4 +1,4 @@
-// ═══════════════════════════════════════════════════════
+ // ═══════════════════════════════════════════════════════
 // SASIM — Nav.tsx
 // v3: Sin botón suscribirme, logo con colores fijos
 // ═══════════════════════════════════════════════════════
@@ -49,7 +49,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
       >
         <div style={{
           width: 36, height: 36, borderRadius: 9, flexShrink: 0,
-          background: '#E8A838',
+          background: '#22C55E',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'var(--fd)', fontWeight: 900, fontSize: '0.9rem',
           color: '#0a0a0f', letterSpacing: '-0.05em',
@@ -74,7 +74,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
               <span style={{
                 padding: '3px 10px', borderRadius: 'var(--radius-full)',
                 background: 'rgba(232,168,56,0.2)', border: '1px solid rgba(232,168,56,0.4)',
-                fontSize: '0.7rem', fontWeight: 800, color: '#E8A838',
+                fontSize: '0.7rem', fontWeight: 800, color: '#22C55E',
                 letterSpacing: '0.05em', textTransform: 'uppercase',
               }}>Admin</span>
             )}
@@ -91,7 +91,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
             onClick={signInWithGoogle}
             style={{
               padding: '8px 20px', borderRadius: 9,
-              background: '#E8A838',
+              background: '#22C55E',
               color: '#0a0a0f', fontWeight: 800, fontSize: '0.88rem',
               border: 'none', cursor: 'pointer',
             }}
