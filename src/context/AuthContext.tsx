@@ -1,10 +1,6 @@
 // ═══════════════════════════════════════════════════════
 // SASIM — AuthContext.tsx
-// Contexto de autenticación con lectura de rol persistente
-//
-// CORRECCIONES:
-// - Lee rol en INITIAL_SESSION, SIGNED_IN y TOKEN_REFRESHED
-// - Exporta login/logout como alias (Perfil.tsx los usa)
+// v3: signOut fuerza recarga limpia de la página
 // ═══════════════════════════════════════════════════════
 
 import {
@@ -18,31 +14,26 @@ import {
 import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
-// ── Tipos ──
 type UserRole = 'visitor' | 'subscriber' | 'admin';
 
 interface AuthState {
   user: User | null;
   role: UserRole;
   loading: boolean;
-  // Nombres canónicos
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   refreshRole: () => Promise<void>;
-  // Alias cortos — Perfil.tsx y otros componentes los usan
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-// ── Provider ──
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole>('visitor');
   const [loading, setLoading] = useState(true);
 
-  // Leer el rol desde public.users
   const fetchRole = useCallback(async (userId: string): Promise<UserRole> => {
     try {
       const { data, error } = await supabase
@@ -50,12 +41,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select('role')
         .eq('id', userId)
         .single();
-
       if (error) {
         console.warn('Error leyendo rol:', error.message);
         return 'visitor';
       }
-
       return (data?.role as UserRole) || 'visitor';
     } catch (e) {
       console.warn('Error inesperado en fetchRole:', e);
@@ -63,7 +52,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Registrar/actualizar usuario en public.users
   const upsertUser = useCallback(async (authUser: User) => {
     try {
       await supabase.from('users').upsert(
@@ -80,7 +68,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Manejar cambios de sesión
   const handleAuthChange = useCallback(
     async (event: AuthChangeEvent, session: Session | null) => {
       const authUser = session?.user ?? null;
@@ -92,12 +79,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // En SIGNED_IN: registrar usuario en la tabla
       if (event === 'SIGNED_IN') {
         await upsertUser(authUser);
       }
 
-      // En TODA sesión activa: leer el rol
       if (
         event === 'INITIAL_SESSION' ||
         event === 'SIGNED_IN' ||
@@ -109,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setLoading(false);
 
-      // Limpiar hash de OAuth de la URL
       if (
         window.location.hash &&
         window.location.hash.includes('access_token')
@@ -125,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(handleAuthChange);
 
-    // Timeout de seguridad
     const timeout = setTimeout(() => {
       setLoading(false);
     }, 5000);
@@ -136,7 +119,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [handleAuthChange]);
 
-  // ── Acciones ──
   async function signInWithGoogle() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -147,10 +129,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }
 
+  // signOut: limpia la sesión en Supabase y recarga la página
+  // La recarga garantiza un estado 100% limpio sin sesión residual
   async function signOut() {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Error cerrando sesión:', e);
+    }
+    // Limpiar estado local inmediatamente
     setUser(null);
     setRole('visitor');
+    // Recargar página para garantizar estado limpio
+    window.location.href = window.location.origin;
   }
 
   async function refreshRole() {
@@ -162,13 +153,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        user,
-        role,
-        loading,
-        signInWithGoogle,
-        signOut,
-        refreshRole,
-        // Alias cortos
+        user, role, loading,
+        signInWithGoogle, signOut, refreshRole,
         login: signInWithGoogle,
         logout: signOut,
       }}
@@ -178,7 +164,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// ── Hook ──
 export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) {

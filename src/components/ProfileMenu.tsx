@@ -1,14 +1,14 @@
 // ═══════════════════════════════════════════════════════
 // SASIM — ProfileMenu.tsx
-// Menú desplegable de perfil — inline styles
+// v3: Sin estrella en suscribirse, logout robusto
 // ═══════════════════════════════════════════════════════
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 const ROLE_STYLES: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  admin: { label: 'Admin', bg: 'rgba(232,168,56,0.2)', color: 'var(--acc)', border: 'rgba(232,168,56,0.4)' },
-  subscriber: { label: 'Suscriptor', bg: 'rgba(34,197,94,0.15)', color: 'var(--acc3)', border: 'rgba(34,197,94,0.3)' },
+  admin: { label: 'Admin', bg: 'rgba(232,168,56,0.2)', color: '#E8A838', border: 'rgba(232,168,56,0.4)' },
+  subscriber: { label: 'Suscriptor', bg: 'rgba(34,197,94,0.15)', color: '#22C55E', border: 'rgba(34,197,94,0.3)' },
   visitor: { label: 'Visitante', bg: 'var(--bg-el)', color: 'var(--tm)', border: 'var(--border)' },
 };
 
@@ -23,7 +23,6 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar al hacer clic fuera
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -34,7 +33,6 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  // Cerrar con Escape
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
       if (e.key === 'Escape') setIsOpen(false);
@@ -53,6 +51,7 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
   function handleAction(action: string) {
     setIsOpen(false);
     if (action === 'logout') {
+      // signOut ya maneja la recarga de página internamente
       signOut();
     } else if (action === 'theme') {
       onToggleTheme?.();
@@ -61,7 +60,6 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
     }
   }
 
-  // ── Estilos reutilizables ──
   const itemStyle: React.CSSProperties = {
     display: 'flex', alignItems: 'center', gap: 10, width: '100%',
     padding: '10px 16px', fontSize: '0.85rem', fontWeight: 600,
@@ -94,9 +92,9 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
         ) : (
           <div style={{
             width: '100%', height: '100%', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--acc), var(--acc2))',
+            background: '#E8A838',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 900, fontSize: '0.85rem', color: 'var(--bg)',
+            fontWeight: 900, fontSize: '0.85rem', color: '#0a0a0f',
           }}>{name.charAt(0).toUpperCase()}</div>
         )}
       </button>
@@ -140,11 +138,11 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
             <span style={{ width: 20, textAlign: 'center' }}>👤</span> Mi perfil
           </button>
 
-          {/* Suscripción — varía según rol */}
+          {/* Suscripción — sin estrella */}
           {role === 'visitor' && (
             <button role="menuitem" onClick={() => handleAction('suscribirse')}
-              style={{ ...itemStyle, color: 'var(--acc)' }}>
-              <span style={{ width: 20, textAlign: 'center' }}>⭐</span> Suscribirse
+              style={{ ...itemStyle, color: '#E8A838' }}>
+              <span style={{ width: 20, textAlign: 'center' }}>💎</span> Suscribirse
             </button>
           )}
           {role === 'subscriber' && (
@@ -172,7 +170,7 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
 
           {/* Cerrar sesión */}
           <button role="menuitem" onClick={() => handleAction('logout')}
-            style={{ ...itemStyle, color: '#ff6b6b' }}>
+            style={{ ...itemStyle, color: '#EF4444' }}>
             <span style={{ width: 20, textAlign: 'center' }}>🚪</span> Cerrar sesión
           </button>
         </div>
