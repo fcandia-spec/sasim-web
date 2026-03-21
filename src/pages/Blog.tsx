@@ -1,428 +1,789 @@
-import { useState, useEffect } from 'react';
-import { TAG_LABEL } from '@/lib/utils';
-import { fmtTime } from '@/lib/utils';
-import { HeartFavorite } from '@/components/ui/heart-favorite';
-import { MessageCircle, Share2, Flag, ChevronDown, ChevronUp, Send } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+// ═══════════════════════════════════════════════════════
+// SASIM — Blog.tsx
+// Página completa del blog — inline styles (sin CSS externo)
+//
+// BUGS CORREGIDOS:
+// - Bug 2: Posts cargan y persisten en Supabase
+// - Bug 3: Comentarios funcionan (insert + display)
+// - Bug 4: Protección contra doble submit
+// - Bug 5: Nombre de autor desde public.users, no email
+// - Bug 7: Likes con post_likes (único por usuario)
+// ═══════════════════════════════════════════════════════
 
-interface BlogPost {
-  id: string;
-  text: string;
-  tag: string;
-  ts: number;
-  likes: number;
-  user_id: string | null;
-  author_name: string;
-  author_photo: string;
-  liked_by_me: boolean;
-  comment_count: number;
+import { useState, useEffect, useCallback, useRef, type FormEvent } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabase';
+import type { User } from '@supabase/supabase-js';
+
+// ── Tipos ──
+interface PostAuthor {
+  name: string | null;
+  photo: string | null;
+  email: string | null;
+  role: string | null;
 }
 
 interface Comment {
   id: string;
   text: string;
-  user_id: string;
-  author_name: string;
-  author_photo: string;
   created_at: string;
+  user_id: string;
+  author: PostAuthor;
 }
 
+interface Post {
+  id: string;
+  text: string;
+  tag: string;
+  created_at: string;
+  user_id: string | null;
+  author: PostAuthor;
+  like_count: number;
+  user_has_liked: boolean;
+  comments: Comment[];
+  comment_count: number;
+}
+
+const TAG_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  familia: { label: 'Familia', bg: 'rgba(232,168,56,0.15)', color: 'var(--acc)' },
+  dibujo: { label: 'Dibujo', bg: 'rgba(255,107,107,0.15)', color: '#ff6b6b' },
+  ia: { label: 'IA', bg: 'rgba(34,197,94,0.15)', color: 'var(--acc3)' },
+  tech: { label: 'Tech', bg: 'rgba(130,100,255,0.15)', color: '#a78bfa' },
+};
+
+// ── Utilidades ──
+function formatTime(dateStr: string): string {
+  const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 60) return 'ahora';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+  return new Date(dateStr).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+}
+
+function getAuthorName(author: PostAuthor): string {
+  if (author.name && author.name.trim().length > 0) return author.name.trim();
+  if (author.email) return author.email.split('@')[0];
+  return 'Usuario';
+}
+
+function getInitials(name: string): string {
+  return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+}
+
+// ═══ Componente principal ═══
 export default function Blog() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [text, setText] = useState('');
-  const [tag, setTag] = useState('');
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+  const [publishText, setPublishText] = useState('');
+  const [publishTag, setPublishTag] = useState('');
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => { loadPosts(); }, [user]);
-
-  async function loadPosts() {
+  // ── Cargar posts desde Supabase ──
+  const loadPosts = useCallback(async () => {
     try {
-      // Traer posts con info del autor
-      const { data: postsData } = await supabase
+      const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select('*')
+        .select(`
+          id, text, tag, created_at, user_id,
+          author:users!posts_user_id_fkey ( name, photo, email, role )
+        `)
         .order('created_at', { ascending: false });
 
-      if (!postsData) { setLoading(false); return; }
-
-      // Traer autores
-      const userIds = [...new Set(postsData.map(p => p.user_id).filter(Boolean))];
-      let usersMap: Record<string, { name: string; photo: string }> = {};
-
-      if (userIds.length > 0) {
-        const { data: usersData } = await supabase
-          .from('users')
-          .select('id, name, photo')
-          .in('id', userIds);
-        if (usersData) {
-          usersData.forEach(u => { usersMap[u.id] = { name: u.name || 'Usuario', photo: u.photo || '' }; });
+      if (postsError) {
+        console.error('Error cargando posts:', postsError);
+        const { data: fallbackData } = await supabase
+          .from('posts').select('*').order('created_at', { ascending: false });
+        if (fallbackData) {
+          setPosts(fallbackData.map((p) => ({
+            ...p, tag: p.tag || 'familia',
+            author: { name: 'SASIM', photo: null, email: null, role: 'admin' },
+            like_count: 0, user_has_liked: false, comments: [], comment_count: 0,
+          })));
         }
+        setLoadingPosts(false);
+        return;
       }
 
-      // Traer likes del usuario actual
-      let myLikes = new Set<string>();
+      if (!postsData || postsData.length === 0) {
+        setPosts([]);
+        setLoadingPosts(false);
+        return;
+      }
+
+      const postIds = postsData.map((p) => p.id);
+
+      // Contar likes por post
+      const { data: likesData } = await supabase
+        .from('post_likes').select('post_id').in('post_id', postIds);
+      const likeCounts: Record<string, number> = {};
+      (likesData ?? []).forEach((l) => {
+        likeCounts[l.post_id] = (likeCounts[l.post_id] || 0) + 1;
+      });
+
+      // Likes del usuario actual
+      let userLikes = new Set<string>();
       if (user) {
-        const { data: likesData } = await supabase
-          .from('post_likes')
-          .select('post_id')
-          .eq('user_id', user.id);
-        if (likesData) {
-          likesData.forEach(l => myLikes.add(l.post_id));
-        }
-      }
-
-      // Contar likes reales desde post_likes
-      const { data: likeCounts } = await supabase
-        .from('post_likes')
-        .select('post_id');
-
-      const likeCountMap: Record<string, number> = {};
-      if (likeCounts) {
-        likeCounts.forEach(l => {
-          likeCountMap[l.post_id] = (likeCountMap[l.post_id] || 0) + 1;
-        });
+        const { data: myLikes } = await supabase
+          .from('post_likes').select('post_id').eq('user_id', user.id).in('post_id', postIds);
+        userLikes = new Set((myLikes ?? []).map((l) => l.post_id));
       }
 
       // Contar comentarios
       const { data: commentCounts } = await supabase
-        .from('comments')
-        .select('post_id');
+        .from('comments').select('post_id').in('post_id', postIds);
+      const commCounts: Record<string, number> = {};
+      (commentCounts ?? []).forEach((c) => {
+        commCounts[c.post_id] = (commCounts[c.post_id] || 0) + 1;
+      });
 
-      const commentCountMap: Record<string, number> = {};
-      if (commentCounts) {
-        commentCounts.forEach(c => {
-          commentCountMap[c.post_id] = (commentCountMap[c.post_id] || 0) + 1;
-        });
-      }
-
-      const mapped: BlogPost[] = postsData.map(p => {
-        const author = p.user_id ? usersMap[p.user_id] : null;
+      // Armar posts
+      const fullPosts: Post[] = postsData.map((p) => {
+        const authorRaw = Array.isArray(p.author) ? p.author[0] : p.author;
+        const author: PostAuthor = authorRaw
+          ? { name: authorRaw.name, photo: authorRaw.photo, email: authorRaw.email, role: authorRaw.role }
+          : { name: 'SASIM', photo: null, email: null, role: 'admin' };
         return {
-          id: p.id,
-          text: p.text || '',
-          tag: p.tag || 'familia',
-          ts: new Date(p.created_at).getTime(),
-          likes: likeCountMap[p.id] || 0,
-          user_id: p.user_id,
-          author_name: author?.name || 'SASIM',
-          author_photo: author?.photo || '',
-          liked_by_me: myLikes.has(p.id),
-          comment_count: commentCountMap[p.id] || 0,
+          id: p.id, text: p.text, tag: p.tag || 'familia', created_at: p.created_at,
+          user_id: p.user_id, author,
+          like_count: likeCounts[p.id] || 0, user_has_liked: userLikes.has(p.id),
+          comments: [], comment_count: commCounts[p.id] || 0,
         };
       });
 
-      setPosts(mapped);
+      fullPosts.sort((a, b) => {
+        if (b.like_count !== a.like_count) return b.like_count - a.like_count;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      setPosts(fullPosts);
     } catch (e) {
-      console.warn('Error cargando posts:', e);
+      console.error('Error inesperado cargando posts:', e);
+      setError('No se pudieron cargar los posts. Intenta recargar la página.');
     } finally {
-      setLoading(false);
+      setLoadingPosts(false);
+    }
+  }, [user]);
+
+  useEffect(() => { loadPosts(); }, [loadPosts]);
+
+  // ── Publicar post ──
+  async function handlePublish(e: FormEvent) {
+    e.preventDefault();
+    const text = publishText.trim();
+    if (text.length < 3 || !user || isPublishing) return;
+
+    setIsPublishing(true);
+    setError(null);
+
+    try {
+      const { error: insertError } = await supabase.from('posts').insert([{
+        text, tag: publishTag || 'familia', user_id: user.id, likes: 0,
+      }]);
+      if (insertError) {
+        console.error('Error publicando post:', insertError);
+        setError('No se pudo publicar. Intenta de nuevo.');
+        return;
+      }
+      setPublishText('');
+      setPublishTag('');
+      await loadPosts();
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.');
+    } finally {
+      setIsPublishing(false);
     }
   }
 
-  async function publish() {
-    if (text.trim().length < 3 || !user) return;
-
-    const { data, error } = await supabase
-      .from('posts')
-      .insert([{ text: text.trim(), tag: tag || 'familia', likes: 0, user_id: user.id }])
-      .select()
-      .single();
-
-    if (error) { console.error('Error publicando:', error); return; }
-
-    if (data) {
-      const newPost: BlogPost = {
-        id: data.id,
-        text: data.text,
-        tag: data.tag || 'familia',
-        ts: new Date(data.created_at).getTime(),
-        likes: 0,
-        user_id: user.id,
-        author_name: user.user_metadata?.full_name || 'Usuario',
-        author_photo: user.user_metadata?.avatar_url || '',
-        liked_by_me: false,
-        comment_count: 0,
-      };
-      setPosts(prev => [newPost, ...prev]);
-    }
-    setText('');
-    setTag('');
-  }
-
-  async function handleLike(postId: string, isLiked: boolean) {
+  // ── Toggle like ──
+  async function handleLike(postId: string) {
     if (!user) return;
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return;
 
-    if (isLiked) {
-      await supabase.from('post_likes').insert([{ post_id: postId, user_id: user.id }]);
-    } else {
-      await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', user.id);
+    // Optimista
+    setPosts((prev) => prev.map((p) => {
+      if (p.id !== postId) return p;
+      if (p.user_has_liked) return { ...p, user_has_liked: false, like_count: Math.max(0, p.like_count - 1) };
+      return { ...p, user_has_liked: true, like_count: p.like_count + 1 };
+    }));
+
+    try {
+      if (post.user_has_liked) {
+        await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', user.id);
+      } else {
+        const { error } = await supabase.from('post_likes').insert([{ post_id: postId, user_id: user.id }]);
+        if (error && error.code === '23505') return;
+      }
+    } catch {
+      // Revertir
+      setPosts((prev) => prev.map((p) => {
+        if (p.id !== postId) return p;
+        return { ...p, user_has_liked: post.user_has_liked, like_count: post.like_count };
+      }));
     }
-
-    setPosts(prev => prev.map(p =>
-      p.id === postId ? { ...p, likes: isLiked ? p.likes + 1 : Math.max(0, p.likes - 1), liked_by_me: isLiked } : p
-    ));
   }
 
-  async function handleShare(post: BlogPost) {
-    const shareText = post.text.substring(0, 100) + (post.text.length > 100 ? '...' : '');
-    const shareData = { title: 'SASIM — ' + post.author_name, text: shareText, url: 'https://sasim-web.pages.dev' };
-
-    if (navigator.share) {
-      try { await navigator.share(shareData); } catch {}
-    } else {
-      await navigator.clipboard.writeText(shareData.url + '\n\n' + shareText);
-      alert('Enlace copiado al portapapeles');
-    }
+  // ── Compartir ──
+  async function handleShare(post: Post) {
+    const shareData = {
+      title: 'SASIM — Sabiduría Simple',
+      text: post.text.slice(0, 140) + (post.text.length > 140 ? '...' : ''),
+      url: window.location.origin,
+    };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else { await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`); alert('Enlace copiado al portapapeles'); }
+    } catch { /* cancelado */ }
   }
 
-  // Ordenar por likes
-  const sortedPosts = [...posts].sort((a, b) => b.likes - a.likes);
-  const tags = ['familia', 'dibujo', 'ia', 'tech'];
+  // ── Reportar ──
+  async function handleReport(postId: string, reason: string) {
+    if (!user) return;
+    try {
+      await supabase.from('reports').insert([{ post_id: postId, user_id: user.id, reason }]);
+      alert('Reporte enviado. Gracias por ayudar a mantener la comunidad.');
+    } catch { alert('No se pudo enviar el reporte.'); }
+  }
 
+  function toggleComments(postId: string) {
+    setExpandedComments((prev) => {
+      const next = new Set(prev);
+      next.has(postId) ? next.delete(postId) : next.add(postId);
+      return next;
+    });
+  }
+
+  function toggleExpand(postId: string) {
+    setExpandedPosts((prev) => {
+      const next = new Set(prev);
+      next.has(postId) ? next.delete(postId) : next.add(postId);
+      return next;
+    });
+  }
+
+  async function handleDelete(postId: string) {
+    if (!confirm('¿Eliminar este post?')) return;
+    try {
+      await supabase.from('posts').delete().eq('id', postId);
+      setPosts((prev) => prev.filter((p) => p.id !== postId));
+    } catch (e) { console.error('Error eliminando post:', e); }
+  }
+
+  // ═══ RENDER ═══
   return (
     <div style={{ maxWidth: 700, margin: '0 auto', padding: '60px 24px 100px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 44 }}>
-        <h2 style={{ fontFamily: 'var(--fd)', fontSize: '2.4rem', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 10 }}>
+      {/* Encabezado */}
+      <header style={{ textAlign: 'center', marginBottom: 40 }}>
+        <motion.h2
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 } as const}
+          style={{
+            fontFamily: 'var(--fd)', fontSize: '2.2rem', fontWeight: 900,
+            letterSpacing: '-0.03em', marginBottom: 10,
+          }}
+        >
           Ideas, <span style={{ color: 'var(--acc)' }}>reflexiones</span> y recursos
-        </h2>
-        <p style={{ color: 'var(--tm)' }}>El muro de SASIM — tecnología, crianza y aprendizaje en pequeñas dosis</p>
-      </div>
+        </motion.h2>
+        <p style={{ color: 'var(--tm)', fontSize: '0.95rem' }}>
+          El muro de SASIM — tecnología, crianza y aprendizaje en pequeñas dosis
+        </p>
+      </header>
 
-      {/* Compositor */}
-      <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 18, padding: 20, marginBottom: 28 }}>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          {user?.user_metadata?.avatar_url ? (
-            <img src={user.user_metadata.avatar_url} alt="" style={{ width: 40, height: 40, borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }} />
-          ) : (
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--acc)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', color: 'var(--bg)' }}>
-              {user ? (user.user_metadata?.full_name?.[0] || 'U') : '?'}
-            </div>
-          )}
-          <textarea
-            value={text} onChange={e => setText(e.target.value)}
-            placeholder={user ? '¿Qué quieres compartir hoy?' : 'Inicia sesión para publicar'}
-            disabled={!user} rows={3}
-            style={{ flex: 1, background: 'transparent', border: 'none', color: 'var(--tp)', fontFamily: 'var(--fb)', fontSize: '0.97rem', lineHeight: 1.6, resize: 'none', outline: 'none', minHeight: 72, opacity: user ? 1 : 0.5 }}
-          />
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {tags.map(t => (
-              <button key={t} onClick={() => setTag(tag === t ? '' : t)} style={{
-                padding: '4px 11px', borderRadius: 'var(--radius-full)',
-                border: '1px solid ' + (tag === t ? 'var(--bglow)' : 'var(--border)'),
-                fontSize: '0.72rem', fontWeight: 800,
-                color: tag === t ? 'var(--acc)' : 'var(--tm)',
-                background: tag === t ? 'var(--acc-s)' : 'transparent',
-              }}>{TAG_LABEL[t]}</button>
-            ))}
+      {/* Composer */}
+      {user ? (
+        <motion.form
+          onSubmit={handlePublish}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 } as const}
+          style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 18, padding: 20, marginBottom: 28,
+          }}
+        >
+          <div style={{ display: 'flex', gap: 13, alignItems: 'flex-start' }}>
+            <Avatar name={user.user_metadata?.full_name || ''} photo={user.user_metadata?.avatar_url} />
+            <textarea
+              placeholder="¿Qué quieres compartir hoy?"
+              value={publishText}
+              onChange={(e) => setPublishText(e.target.value)}
+              rows={3}
+              maxLength={2000}
+              style={{
+                flex: 1, background: 'transparent', border: 'none', color: 'var(--tp)',
+                fontFamily: 'var(--fb)', fontSize: '0.97rem', lineHeight: 1.6,
+                resize: 'none', outline: 'none', minHeight: 72,
+              }}
+            />
           </div>
-          <button onClick={publish} disabled={text.trim().length < 3 || !user} style={{
-            padding: '8px 20px', background: 'var(--acc)', color: 'var(--bg)',
-            borderRadius: 'var(--radius-full)', fontWeight: 800, fontSize: '0.83rem',
-            opacity: (text.trim().length < 3 || !user) ? 0.35 : 1,
-          }}>Publicar</button>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)',
+          }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {Object.entries(TAG_CONFIG).map(([key, cfg]) => (
+                <button key={key} type="button"
+                  onClick={() => setPublishTag(publishTag === key ? '' : key)}
+                  style={{
+                    padding: '4px 11px', borderRadius: 'var(--radius-full)',
+                    border: `1px solid ${publishTag === key ? 'var(--bglow)' : 'var(--border)'}`,
+                    fontSize: '0.72rem', fontWeight: 800,
+                    color: publishTag === key ? 'var(--acc)' : 'var(--tm)',
+                    background: publishTag === key ? 'var(--acc-s)' : 'transparent',
+                    cursor: 'pointer',
+                  }}>
+                  {cfg.label}
+                </button>
+              ))}
+            </div>
+            <button type="submit"
+              disabled={publishText.trim().length < 3 || isPublishing}
+              style={{
+                padding: '8px 20px', background: 'var(--acc)', color: 'var(--bg)',
+                borderRadius: 'var(--radius-full)', fontWeight: 800, fontSize: '0.83rem',
+                border: 'none', cursor: 'pointer',
+                opacity: (publishText.trim().length < 3 || isPublishing) ? 0.35 : 1,
+              }}>
+              {isPublishing ? 'Publicando...' : 'Publicar'}
+            </button>
+          </div>
+        </motion.form>
+      ) : (
+        <div style={{
+          textAlign: 'center', padding: 24, marginBottom: 28,
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 18, color: 'var(--tm)', fontSize: '0.9rem',
+        }}>
+          Inicia sesión para publicar y participar en la comunidad
         </div>
-      </div>
+      )}
+
+      {/* Error */}
+      {error && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 16px', marginBottom: 16,
+          background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)',
+          borderRadius: 10, color: '#ff6b6b', fontSize: '0.88rem',
+        }}>
+          <span>{error}</span>
+          <button onClick={() => setError(null)} style={{ color: '#ff6b6b', fontSize: '1rem', padding: 4 }}>✕</button>
+        </div>
+      )}
 
       {/* Feed */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {loading && <div style={{ textAlign: 'center', padding: 40, color: 'var(--tm)' }}>Cargando publicaciones...</div>}
-        {!loading && sortedPosts.length === 0 && (
-          <div style={{ textAlign: 'center', padding: 70, color: 'var(--tf)' }}>
-            <div style={{ fontSize: '2.8rem', marginBottom: 14 }}>📝</div>
-            <p style={{ color: 'var(--tm)' }}>Aún no hay publicaciones. ¡Sé el primero!</p>
-          </div>
-        )}
-        {sortedPosts.map(p => (
-          <PostCard key={p.id} post={p} onLike={handleLike} onShare={handleShare} />
-        ))}
-      </div>
+      {loadingPosts ? (
+        <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--tf)' }}>
+          <div style={{
+            width: 32, height: 32, border: '3px solid var(--bg-el)',
+            borderTopColor: 'var(--acc)', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite', margin: '0 auto 12px',
+          }} />
+          <p>Cargando posts...</p>
+        </div>
+      ) : posts.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '70px 24px', color: 'var(--tf)' }}>
+          <div style={{ fontSize: '2.8rem', marginBottom: 14 }}>📝</div>
+          <h3 style={{ fontFamily: 'var(--fd)', fontWeight: 700, marginBottom: 6, color: 'var(--tm)' }}>
+            Aún no hay publicaciones
+          </h3>
+          <p style={{ fontSize: '0.88rem' }}>Sé el primero en compartir algo con la comunidad</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <AnimatePresence mode="popLayout">
+            {posts.map((post, index) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                index={index}
+                currentUser={user}
+                currentRole={role}
+                isExpanded={expandedPosts.has(post.id)}
+                showComments={expandedComments.has(post.id)}
+                onLike={handleLike}
+                onShare={handleShare}
+                onReport={handleReport}
+                onDelete={handleDelete}
+                onToggleComments={toggleComments}
+                onToggleExpand={toggleExpand}
+                onCommentAdded={loadPosts}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </div>
   );
 }
 
+// ═══════════════════════════════════════════════════════
+// PostCard
+// ═══════════════════════════════════════════════════════
+interface PostCardProps {
+  post: Post; index: number; currentUser: User | null; currentRole: string;
+  isExpanded: boolean; showComments: boolean;
+  onLike: (id: string) => void; onShare: (p: Post) => void;
+  onReport: (id: string, reason: string) => void; onDelete: (id: string) => void;
+  onToggleComments: (id: string) => void; onToggleExpand: (id: string) => void;
+  onCommentAdded: () => void;
+}
 
-// ═══ POST CARD ═══
-function PostCard({ post, onLike, onShare }: {
-  post: BlogPost;
-  onLike: (id: string, liked: boolean) => void;
-  onShare: (post: BlogPost) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [commentText, setCommentText] = useState('');
-  const [loadingComments, setLoadingComments] = useState(false);
-  const { user } = useAuth();
+function PostCard({
+  post, index, currentUser, currentRole, isExpanded, showComments,
+  onLike, onShare, onReport, onDelete, onToggleComments, onToggleExpand, onCommentAdded,
+}: PostCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const authorName = getAuthorName(post.author);
   const isLong = post.text.length > 260;
+  const isAdmin = currentRole === 'admin';
+  const isAuthor = currentUser?.id === post.user_id;
+  const tagCfg = TAG_CONFIG[post.tag] || TAG_CONFIG.familia;
 
-  const tagClass = post.tag === 'dibujo' ? 'bg-red-500/15 text-red-400' :
-                   post.tag === 'ia' ? 'bg-green-500/15 text-green-400' :
-                   post.tag === 'familia' ? 'bg-amber-500/15 text-amber-400' :
-                   'bg-purple-500/15 text-purple-400';
-  const tagLabel = TAG_LABEL[post.tag] || 'General';
-
-  async function loadComments() {
-    setLoadingComments(true);
-    try {
-      const { data: commentsData } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('post_id', post.id)
-        .order('created_at', { ascending: true });
-
-      if (commentsData && commentsData.length > 0) {
-        const userIds = [...new Set(commentsData.map(c => c.user_id))];
-        const { data: usersData } = await supabase.from('users').select('id, name, photo').in('id', userIds);
-        const usersMap: Record<string, { name: string; photo: string }> = {};
-        usersData?.forEach(u => { usersMap[u.id] = { name: u.name || 'Usuario', photo: u.photo || '' }; });
-
-        setComments(commentsData.map(c => ({
-          id: c.id, text: c.text, user_id: c.user_id, created_at: c.created_at,
-          author_name: usersMap[c.user_id]?.name || 'Usuario',
-          author_photo: usersMap[c.user_id]?.photo || '',
-        })));
-      }
-    } catch (e) { console.warn('Error cargando comentarios:', e); }
-    finally { setLoadingComments(false); }
-  }
-
-  function toggleComments() {
-    const next = !showComments;
-    setShowComments(next);
-    if (next && comments.length === 0) loadComments();
-  }
-
-  async function submitComment() {
-    if (!user || commentText.trim().length < 1) return;
-    const { data, error } = await supabase
-      .from('comments')
-      .insert([{ post_id: post.id, user_id: user.id, text: commentText.trim() }])
-      .select()
-      .single();
-
-    if (error) { console.error('Error comentando:', error); return; }
-    if (data) {
-      setComments(prev => [...prev, {
-        id: data.id, text: data.text, user_id: user.id, created_at: data.created_at,
-        author_name: user.user_metadata?.full_name || 'Usuario',
-        author_photo: user.user_metadata?.avatar_url || '',
-      }]);
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowMenu(false);
     }
-    setCommentText('');
-  }
+    if (showMenu) document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showMenu]);
 
-  async function reportPost() {
-    if (!user) return;
-    const reason = prompt('¿Por qué reportas esta publicación?');
-    if (!reason) return;
-    await supabase.from('reports').insert([{ post_id: post.id, user_id: user.id, reason }]);
-    alert('Reporte enviado. Gracias por ayudar a mantener la comunidad.');
-  }
+  const actionBtnStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 5,
+    fontSize: '0.77rem', color: 'var(--tf)', padding: '5px 10px',
+    borderRadius: 7, background: 'none', border: 'none',
+    cursor: 'pointer', fontFamily: 'inherit', transition: 'var(--tr)',
+  };
 
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 15, padding: 22 }}>
-      {/* Header con autor real */}
+    <motion.article
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) } as const}
+      layout
+      style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border)',
+        borderRadius: 15, padding: 22, transition: 'var(--tr)',
+      }}
+    >
+      {/* Cabecera */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 11, marginBottom: 13 }}>
-        {post.author_photo ? (
-          <img src={post.author_photo} alt="" style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover' }} />
-        ) : (
-          <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.85rem', color: 'var(--bg)' }}>
-            {post.author_name[0]}
-          </div>
-        )}
+        <Avatar name={authorName} photo={post.author.photo} />
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 800, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 5 }}>
-            {post.author_name}
-            {!post.user_id && (
-              <span style={{ width: 15, height: 15, background: 'var(--acc)', borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.5rem', color: 'var(--bg)' }}>✓</span>
+            {authorName}
+            {post.author.role === 'admin' && (
+              <span style={{
+                width: 15, height: 15, background: 'var(--acc)', borderRadius: '50%',
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.5rem', color: 'var(--bg)',
+              }}>✓</span>
             )}
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--tf)', marginTop: 1 }}>{fmtTime(post.ts)}</div>
+          <div style={{ fontSize: '0.74rem', color: 'var(--tf)', marginTop: 1 }}>
+            {formatTime(post.created_at)}
+          </div>
         </div>
-        <span className={tagClass} style={{ padding: '3px 9px', borderRadius: 'var(--radius-full)', fontSize: '0.67rem', fontWeight: 800, letterSpacing: '0.04em' }}>{tagLabel}</span>
+        <span style={{
+          padding: '3px 9px', borderRadius: 'var(--radius-full)',
+          fontSize: '0.67rem', fontWeight: 800, letterSpacing: '0.04em',
+          textTransform: 'uppercase', background: tagCfg.bg, color: tagCfg.color,
+        }}>
+          {tagCfg.label}
+        </span>
       </div>
 
-      {/* Body */}
+      {/* Cuerpo */}
       <div style={{
-        fontSize: '0.93rem', lineHeight: 1.72, marginBottom: 14, whiteSpace: 'pre-wrap',
-        ...(isLong && !expanded ? { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' } : {}),
-      }}>{post.text}</div>
-      {isLong && !expanded && (
-        <span onClick={() => setExpanded(true)} style={{ fontSize: '0.8rem', color: 'var(--acc)', fontWeight: 700, cursor: 'pointer' }}>Ver más</span>
+        fontSize: '0.93rem', lineHeight: 1.72, color: 'var(--tp)',
+        marginBottom: 14, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+        ...(isLong && !isExpanded ? {
+          display: '-webkit-box', WebkitLineClamp: 4,
+          WebkitBoxOrient: 'vertical' as const, overflow: 'hidden',
+        } : {}),
+      }}>
+        {post.text}
+      </div>
+      {isLong && !isExpanded && (
+        <button onClick={() => onToggleExpand(post.id)} style={{
+          fontSize: '0.8rem', color: 'var(--acc)', fontWeight: 700,
+          cursor: 'pointer', background: 'none', border: 'none', padding: 0, marginBottom: 10,
+        }}>Ver más</button>
       )}
 
       {/* Acciones */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
-        <HeartFavorite count={post.likes} size="sm" liked={post.liked_by_me} onToggle={(liked) => onLike(post.id, liked)} />
-        <button onClick={toggleComments} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.77rem', color: 'var(--tf)', padding: '4px 8px', borderRadius: 7 }}>
-          <MessageCircle size={16} />
-          {post.comment_count > 0 ? post.comment_count : ''} Comentar
-          {showComments ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button
+          onClick={() => onLike(post.id)}
+          disabled={!currentUser}
+          style={{
+            ...actionBtnStyle,
+            color: post.user_has_liked ? '#ff6b6b' : 'var(--tf)',
+            opacity: currentUser ? 1 : 0.5,
+          }}
+        >
+          {post.user_has_liked ? '♥' : '♡'} {post.like_count > 0 ? post.like_count : ''}
         </button>
-        <button onClick={() => onShare(post)} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.77rem', color: 'var(--tf)', padding: '4px 8px', borderRadius: 7 }}>
-          <Share2 size={16} /> Compartir
+
+        <button onClick={() => onToggleComments(post.id)} style={actionBtnStyle}>
+          💬 {post.comment_count > 0 ? post.comment_count : ''}
         </button>
-        {user && (
-          <button onClick={reportPost} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', color: 'var(--tf)', padding: '4px 6px', borderRadius: 7, marginLeft: 'auto' }} title="Reportar">
-            <Flag size={14} />
-          </button>
-        )}
+
+        <button onClick={() => onShare(post)} style={actionBtnStyle}>
+          ↗ Compartir
+        </button>
+
+        {/* Menú */}
+        <div ref={menuRef} style={{ position: 'relative', marginLeft: 'auto' }}>
+          <button onClick={() => setShowMenu(!showMenu)} style={actionBtnStyle}>···</button>
+          {showMenu && (
+            <div style={{
+              position: 'absolute', right: 0, bottom: '100%', marginBottom: 6,
+              background: 'var(--bg-card)', border: '1px solid var(--border)',
+              borderRadius: 10, padding: 6, minWidth: 160,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 10,
+            }}>
+              {currentUser && (
+                <button onClick={() => { onReport(post.id, 'contenido inapropiado'); setShowMenu(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '8px 12px', borderRadius: 6, fontSize: '0.82rem', fontWeight: 600,
+                    color: 'var(--tm)', background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}>🚩 Reportar</button>
+              )}
+              {(isAdmin || isAuthor) && (
+                <button onClick={() => { onDelete(post.id); setShowMenu(false); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                    padding: '8px 12px', borderRadius: 6, fontSize: '0.82rem', fontWeight: 600,
+                    color: '#ff4444', background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}>🗑 Eliminar</button>
+              )}
+              <button onClick={() => setShowMenu(false)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                  padding: '8px 12px', borderRadius: 6, fontSize: '0.82rem', fontWeight: 600,
+                  color: 'var(--tm)', background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}>Cancelar</button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Sección de comentarios */}
-      <AnimatePresence>
-        {showComments && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ overflow: 'hidden', marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}
-          >
-            {loadingComments && <div style={{ fontSize: '0.82rem', color: 'var(--tm)', padding: '8px 0' }}>Cargando comentarios...</div>}
+      {/* Comentarios */}
+      {showComments && (
+        <CommentSection postId={post.id} currentUser={currentUser} onCommentAdded={onCommentAdded} />
+      )}
+    </motion.article>
+  );
+}
 
-            {comments.map(c => (
-              <div key={c.id} style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-                {c.author_photo ? (
-                  <img src={c.author_photo} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
-                ) : (
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--bg-el)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', fontWeight: 800, flexShrink: 0, color: 'var(--tm)' }}>{c.author_name[0]}</div>
-                )}
-                <div style={{ flex: 1, background: 'var(--bg-el)', borderRadius: 'var(--radius-sm)', padding: '8px 12px' }}>
-                  <div style={{ fontSize: '0.78rem', fontWeight: 700, marginBottom: 2 }}>{c.author_name}</div>
-                  <div style={{ fontSize: '0.85rem', lineHeight: 1.5 }}>{c.text}</div>
-                </div>
-              </div>
-            ))}
+// ═══════════════════════════════════════════════════════
+// CommentSection
+// ═══════════════════════════════════════════════════════
+interface CommentSectionProps {
+  postId: string;
+  currentUser: User | null;
+  onCommentAdded: () => void;
+}
 
-            {user ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <input
-                  value={commentText} onChange={e => setCommentText(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && submitComment()}
-                  placeholder="Escribe un comentario..."
-                  style={{ flex: 1, padding: '8px 14px', borderRadius: 'var(--radius-full)', border: '1px solid var(--border)', background: 'var(--bg-el)', color: 'var(--tp)', fontSize: '0.85rem', outline: 'none', fontFamily: 'var(--fb)' }}
-                />
-                <button onClick={submitComment} disabled={commentText.trim().length < 1} style={{
-                  width: 34, height: 34, borderRadius: '50%', background: commentText.trim() ? 'var(--acc)' : 'var(--bg-el)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+function CommentSection({ postId, currentUser, onCommentAdded }: CommentSectionProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [commentText, setCommentText] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    async function loadComments() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('comments')
+          .select(`
+            id, text, created_at, user_id,
+            author:users!comments_user_id_fkey ( name, photo, email, role )
+          `)
+          .eq('post_id', postId)
+          .order('created_at', { ascending: true });
+
+        if (error) {
+          console.warn('Error cargando comentarios:', error);
+          const { data: fallback } = await supabase
+            .from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
+          if (fallback) {
+            setComments(fallback.map((c) => ({
+              ...c, author: { name: 'Usuario', photo: null, email: null, role: null },
+            })));
+          }
+          setLoading(false);
+          return;
+        }
+
+        setComments((data ?? []).map((c) => {
+          const authorRaw = Array.isArray(c.author) ? c.author[0] : c.author;
+          return {
+            id: c.id, text: c.text, created_at: c.created_at, user_id: c.user_id,
+            author: authorRaw
+              ? { name: authorRaw.name, photo: authorRaw.photo, email: authorRaw.email, role: authorRaw.role }
+              : { name: 'Usuario', photo: null, email: null, role: null },
+          };
+        }));
+      } catch (e) {
+        console.warn('Error inesperado cargando comentarios:', e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadComments();
+  }, [postId]);
+
+  async function handleSendComment(e: FormEvent) {
+    e.preventDefault();
+    const text = commentText.trim();
+    if (text.length < 1 || !currentUser || isSending) return;
+
+    setIsSending(true);
+    try {
+      const { data, error } = await supabase
+        .from('comments')
+        .insert([{ post_id: postId, user_id: currentUser.id, text }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error publicando comentario:', error);
+        alert('No se pudo publicar el comentario.');
+        return;
+      }
+
+      setComments((prev) => [...prev, {
+        id: data.id, text: data.text, created_at: data.created_at, user_id: data.user_id,
+        author: {
+          name: currentUser.user_metadata?.full_name || null,
+          photo: currentUser.user_metadata?.avatar_url || null,
+          email: currentUser.email || null, role: null,
+        },
+      }]);
+      setCommentText('');
+      onCommentAdded();
+    } catch {
+      console.error('Error inesperado publicando comentario');
+    } finally {
+      setIsSending(false);
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.25 } as const}
+      style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', overflow: 'hidden' }}
+    >
+      {loading ? (
+        <div style={{ textAlign: 'center', color: 'var(--tf)', fontSize: '0.82rem', padding: '12px 0' }}>
+          Cargando comentarios...
+        </div>
+      ) : (
+        <>
+          {comments.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 14 }}>
+              {comments.map((c) => {
+                const name = getAuthorName(c.author);
+                return (
+                  <div key={c.id} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    <Avatar name={name} photo={c.author.photo} size="small" />
+                    <div style={{ flex: 1, background: 'var(--bg-el)', borderRadius: 12, padding: '8px 12px' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.78rem', color: 'var(--tp)', marginRight: 6 }}>{name}</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--tm)', wordBreak: 'break-word' }}>{c.text}</span>
+                      <span style={{ display: 'block', fontSize: '0.68rem', color: 'var(--tf)', marginTop: 3 }}>
+                        {formatTime(c.created_at)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {currentUser ? (
+            <form onSubmit={handleSendComment} style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              <textarea
+                ref={inputRef}
+                placeholder="Escribe un comentario..."
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                rows={1}
+                maxLength={500}
+                style={{
+                  flex: 1, background: 'var(--bg-el)', border: '1px solid var(--border)',
+                  borderRadius: 10, padding: '8px 12px', color: 'var(--tp)',
+                  fontFamily: 'var(--fb)', fontSize: '0.85rem', resize: 'none',
+                  outline: 'none', minHeight: 36,
+                }}
+              />
+              <button type="submit"
+                disabled={commentText.trim().length < 1 || isSending}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%', background: 'var(--acc)',
+                  color: 'var(--bg)', fontSize: '1rem', fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: 'none', cursor: 'pointer', flexShrink: 0,
+                  opacity: (commentText.trim().length < 1 || isSending) ? 0.35 : 1,
                 }}>
-                  <Send size={14} style={{ color: commentText.trim() ? 'var(--bg)' : 'var(--tf)' }} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ fontSize: '0.82rem', color: 'var(--tm)', textAlign: 'center', padding: 8 }}>
-                Inicia sesión para comentar
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+                {isSending ? '...' : '→'}
+              </button>
+            </form>
+          ) : (
+            <p style={{ textAlign: 'center', fontSize: '0.82rem', color: 'var(--tf)', padding: '8px 0' }}>
+              Inicia sesión para comentar
+            </p>
+          )}
+        </>
+      )}
+    </motion.div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// Avatar reutilizable
+// ═══════════════════════════════════════════════════════
+function Avatar({ name, photo, size = 'normal' }: { name: string; photo?: string | null; size?: 'small' | 'normal' }) {
+  const dim = size === 'small' ? 28 : 38;
+
+  if (photo) {
+    return (
+      <img src={photo} alt="" referrerPolicy="no-referrer"
+        style={{ width: dim, height: dim, borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
+        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+      />
+    );
+  }
+
+  return (
+    <div style={{
+      width: dim, height: dim, borderRadius: '50%', flexShrink: 0,
+      background: 'linear-gradient(135deg, var(--acc), var(--acc2))',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontWeight: 900, fontSize: size === 'small' ? '0.65rem' : '0.85rem',
+      color: 'var(--bg)',
+    }}>
+      {getInitials(name || 'U')}
     </div>
   );
 }

@@ -1,131 +1,182 @@
+// ═══════════════════════════════════════════════════════
+// SASIM — ProfileMenu.tsx
+// Menú desplegable de perfil — inline styles
+// ═══════════════════════════════════════════════════════
+
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
-import { User, CreditCard, Settings, LogOut, Moon, Sun } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+
+const ROLE_STYLES: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  admin: { label: 'Admin', bg: 'rgba(232,168,56,0.2)', color: 'var(--acc)', border: 'rgba(232,168,56,0.4)' },
+  subscriber: { label: 'Suscriptor', bg: 'rgba(34,197,94,0.15)', color: 'var(--acc3)', border: 'rgba(34,197,94,0.3)' },
+  visitor: { label: 'Visitante', bg: 'var(--bg-el)', color: 'var(--tm)', border: 'var(--border)' },
+};
 
 interface ProfileMenuProps {
-  onNavigate: (page: string) => void;
+  onNavigate?: (page: string) => void;
+  onToggleTheme?: () => void;
+  isDark?: boolean;
 }
 
-export default function ProfileMenu({ onNavigate }: ProfileMenuProps) {
-  const [open, setOpen] = useState(false);
-  const { user, role, logout } = useAuth();
-  const { theme, toggle } = useTheme();
+export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }: ProfileMenuProps) {
+  const { user, role, signOut } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Cerrar al hacer click fuera
+  // Cerrar al hacer clic fuera
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        setIsOpen(false);
       }
     }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === 'Escape') setIsOpen(false);
+    }
+    if (isOpen) document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
 
   if (!user) return null;
 
+  const name = user.user_metadata?.full_name || 'Usuario';
   const photo = user.user_metadata?.avatar_url || '';
-  const name = user.user_metadata?.full_name?.split(' ')[0] || 'Usuario';
+  const email = user.email || '';
+  const rs = ROLE_STYLES[role] || ROLE_STYLES.visitor;
 
-  function handleNav(page: string) {
-    setOpen(false);
-    onNavigate(page);
+  function handleAction(action: string) {
+    setIsOpen(false);
+    if (action === 'logout') {
+      signOut();
+    } else if (action === 'theme') {
+      onToggleTheme?.();
+    } else if (onNavigate) {
+      onNavigate(action);
+    }
   }
 
-  function handleLogout() {
-    setOpen(false);
-    logout();
-  }
+  // ── Estilos reutilizables ──
+  const itemStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+    padding: '10px 16px', fontSize: '0.85rem', fontWeight: 600,
+    color: 'var(--tm)', background: 'none', border: 'none',
+    cursor: 'pointer', transition: 'background 0.2s', fontFamily: 'inherit',
+    textAlign: 'left', borderRadius: 0,
+  };
 
-  const items = [
-    { icon: User, label: 'Mi perfil', action: () => handleNav('perfil') },
-    { icon: CreditCard, label: 'Suscripción', action: () => handleNav('suscribirse') },
-    { icon: Settings, label: 'Configuración', action: () => handleNav('conocemas') },
-    { icon: theme === 'dark' ? Sun : Moon, label: theme === 'dark' ? 'Tema claro' : 'Tema oscuro', action: toggle },
-    { icon: LogOut, label: 'Cerrar sesión', action: handleLogout, danger: true },
-  ];
+  const dividerStyle: React.CSSProperties = {
+    height: 1, background: 'var(--border)', margin: 0,
+  };
 
   return (
     <div ref={menuRef} style={{ position: 'relative' }}>
+      {/* Trigger — foto de perfil */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Menú de perfil"
+        aria-expanded={isOpen}
         style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '4px 4px 4px 12px', borderRadius: 'var(--radius-full)',
-          border: '1px solid var(--border)', background: 'var(--bg-card)',
-          cursor: 'pointer', transition: 'var(--tr)',
+          width: 36, height: 36, borderRadius: '50%', padding: 0,
+          border: '2px solid var(--acc)', background: 'none',
+          cursor: 'pointer', overflow: 'hidden', transition: 'box-shadow 0.25s',
+          boxShadow: isOpen ? '0 0 0 3px var(--acc-s)' : 'none',
         }}
       >
-        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--tm)' }}>{name}</span>
         {photo ? (
-          <img src={photo} alt="" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--acc)', objectFit: 'cover' }} />
+          <img src={photo} alt="" referrerPolicy="no-referrer"
+            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--acc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: '0.8rem', color: 'var(--bg)' }}>
-            {name[0]}
-          </div>
+          <div style={{
+            width: '100%', height: '100%', borderRadius: '50%',
+            background: 'linear-gradient(135deg, var(--acc), var(--acc2))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontWeight: 900, fontSize: '0.85rem', color: 'var(--bg)',
+          }}>{name.charAt(0).toUpperCase()}</div>
         )}
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.96 }}
-            transition={{ duration: 0.15 }}
-            style={{
-              position: 'absolute', top: '100%', right: 0, marginTop: 8,
-              width: 220, background: 'var(--bg-card)',
-              border: '1px solid var(--border)', borderRadius: 'var(--radius-md)',
-              boxShadow: '0 12px 40px rgba(0,0,0,0.25)', overflow: 'hidden', zIndex: 200,
-            }}
-          >
-            {/* Header del menú */}
-            <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{user.user_metadata?.full_name || 'Usuario'}</div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--tm)', marginTop: 2 }}>{user.email}</div>
-              <span style={{
-                display: 'inline-block', marginTop: 6, padding: '2px 8px',
-                borderRadius: 'var(--radius-full)', fontSize: '0.65rem', fontWeight: 800,
-                textTransform: 'uppercase',
-                background: role === 'admin' ? 'rgba(232,168,56,0.2)' : role === 'subscriber' ? 'rgba(34,197,94,0.15)' : 'var(--bg-el)',
-                color: role === 'admin' ? 'var(--acc)' : role === 'subscriber' ? 'var(--acc3)' : 'var(--tm)',
-              }}>
-                {role === 'admin' ? 'Admin' : role === 'subscriber' ? 'Suscriptor' : 'Visitante'}
-              </span>
+      {/* Dropdown */}
+      {isOpen && (
+        <div role="menu" style={{
+          position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 14, minWidth: 240,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.5)', zIndex: 200,
+          overflow: 'hidden', animation: 'fadeUp 0.2s ease',
+        }}>
+          {/* Cabecera */}
+          <div style={{
+            padding: 16, display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', gap: 10,
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontWeight: 800, fontSize: '0.9rem', color: 'var(--tp)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{name}</div>
+              <div style={{
+                fontSize: '0.75rem', color: 'var(--tf)',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{email}</div>
             </div>
+            <span style={{
+              padding: '3px 10px', borderRadius: 'var(--radius-full)',
+              fontSize: '0.67rem', fontWeight: 800, textTransform: 'uppercase',
+              letterSpacing: '0.04em', flexShrink: 0,
+              background: rs.bg, color: rs.color, border: `1px solid ${rs.border}`,
+            }}>{rs.label}</span>
+          </div>
 
-            {/* Items */}
-            {items.map((item, i) => {
-              const Icon = item.icon;
-              const isDanger = 'danger' in item && item.danger;
-              return (
-                <button
-                  key={i}
-                  onClick={item.action}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '10px 16px', fontSize: '0.85rem', fontWeight: 600,
-                    color: isDanger ? 'var(--danger)' : 'var(--tp)',
-                    background: 'transparent', textAlign: 'left',
-                    borderTop: i === items.length - 1 ? '1px solid var(--border)' : 'none',
-                    transition: 'background 0.15s',
-                    cursor: 'pointer', fontFamily: 'var(--fb)',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-el)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <Icon size={16} />
-                  {item.label}
-                </button>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
+          <div style={dividerStyle} />
+
+          {/* Mi perfil */}
+          <button role="menuitem" onClick={() => handleAction('perfil')} style={itemStyle}>
+            <span style={{ width: 20, textAlign: 'center' }}>👤</span> Mi perfil
+          </button>
+
+          {/* Suscripción — varía según rol */}
+          {role === 'visitor' && (
+            <button role="menuitem" onClick={() => handleAction('suscribirse')}
+              style={{ ...itemStyle, color: 'var(--acc)' }}>
+              <span style={{ width: 20, textAlign: 'center' }}>⭐</span> Suscribirse
+            </button>
+          )}
+          {role === 'subscriber' && (
+            <button role="menuitem" onClick={() => handleAction('suscribirse')} style={itemStyle}>
+              <span style={{ width: 20, textAlign: 'center' }}>💳</span> Mi suscripción
+            </button>
+          )}
+          {role === 'admin' && (
+            <button role="menuitem"
+              onClick={() => { setIsOpen(false); window.open('/admin.html', '_blank'); }}
+              style={itemStyle}>
+              <span style={{ width: 20, textAlign: 'center' }}>⚙️</span> Panel Admin
+            </button>
+          )}
+
+          <div style={dividerStyle} />
+
+          {/* Tema */}
+          <button role="menuitem" onClick={() => handleAction('theme')} style={itemStyle}>
+            <span style={{ width: 20, textAlign: 'center' }}>{isDark ? '☀️' : '🌙'}</span>
+            {isDark ? 'Modo claro' : 'Modo oscuro'}
+          </button>
+
+          <div style={dividerStyle} />
+
+          {/* Cerrar sesión */}
+          <button role="menuitem" onClick={() => handleAction('logout')}
+            style={{ ...itemStyle, color: '#ff6b6b' }}>
+            <span style={{ width: 20, textAlign: 'center' }}>🚪</span> Cerrar sesión
+          </button>
+        </div>
+      )}
     </div>
   );
 }
