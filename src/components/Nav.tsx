@@ -66,7 +66,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
           fontFamily: 'var(--fd)', fontWeight: 900, fontSize: '0.9rem',
           color: 'var(--bg)', letterSpacing: '-0.05em',
           boxShadow: '0 4px 16px var(--acc-g)',
-        }}>SA</div>
+        }}>S</div>
         <span style={{ color: 'inherit' }}>SASIM</span>
       </a>
 
@@ -101,7 +101,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
                   color: '#fff', fontWeight: 800, fontSize: '0.82rem',
                   border: 'none', cursor: 'pointer', transition: 'var(--tr)',
                 }}
-              >⭐ Suscribirme</button>
+              > Suscribirme</button>
             )}
 
             {/* Menú de perfil */}
