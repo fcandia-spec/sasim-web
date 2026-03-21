@@ -54,7 +54,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
           fontFamily: 'var(--fd)', fontWeight: 900, fontSize: '0.9rem',
           color: '#0a0a0f', letterSpacing: '-0.05em',
           boxShadow: '0 4px 16px rgba(232,168,56,0.22)',
-        }}>SA</div>
+        }}>S</div>
         <span>SASIM</span>
       </a>
 
