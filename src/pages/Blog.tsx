@@ -89,32 +89,35 @@ export default function Blog() {
     try {
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select(`
-          id, text, tag, created_at, user_id,
-          author:users!posts_user_id_fkey ( name, photo, email, role )
-        `)
+        .select('id, text, tag, created_at, user_id')
         .order('created_at', { ascending: false });
 
       if (postsError) {
         console.error('Error cargando posts:', postsError);
-        const { data: fallbackData } = await supabase
-          .from('posts').select('*').order('created_at', { ascending: false });
-        if (fallbackData) {
-          setPosts(fallbackData.map((p) => ({
-            ...p, tag: p.tag || 'familia',
-            author: { name: 'SASIM', photo: null, email: null, role: 'admin' },
-            like_count: 0, user_has_liked: false, comments: [], comment_count: 0,
-          })));
-        }
         setLoadingPosts(false);
         return;
       }
-
+      
       if (!postsData || postsData.length === 0) {
         setPosts([]);
         setLoadingPosts(false);
         return;
       }
+      // Buscar autores desde public.users (sin FK join)
+      const uniqueUserIds = [...new Set(postsData.map((p) => p.user_id).filter(Boolean))] as string[];
+      const authorsMap: Record<string, PostAuthor> = {};
+      if (uniqueUserIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, name, photo, email, role')
+          .in('id', uniqueUserIds);
+        (usersData ?? []).forEach((u) => {
+          authorsMap[u.id] = { name: u.name, photo: u.photo, email: u.email, role: u.role };
+        });
+      }
+
+
+    
 
       const postIds = postsData.map((p) => p.id);
 
@@ -144,10 +147,9 @@ export default function Blog() {
 
       // Armar posts
       const fullPosts: Post[] = postsData.map((p) => {
-        const authorRaw = Array.isArray(p.author) ? p.author[0] : p.author;
-        const author: PostAuthor = authorRaw
-          ? { name: authorRaw.name, photo: authorRaw.photo, email: authorRaw.email, role: authorRaw.role }
-          : { name: 'SASIM', photo: null, email: null, role: 'admin' };
+        const author: PostAuthor = p.user_id && authorsMap[p.user_id]
+          ? authorsMap[p.user_id]
+          : { name: null, photo: null, email: null, role: null };
         return {
           id: p.id, text: p.text, tag: p.tag || 'familia', created_at: p.created_at,
           user_id: p.user_id, author,
@@ -611,37 +613,40 @@ function CommentSection({ postId, currentUser, onCommentAdded }: CommentSectionP
     async function loadComments() {
       setLoading(true);
       try {
-        const { data, error } = await supabase
+const { data, error } = await supabase
           .from('comments')
-          .select(`
-            id, text, created_at, user_id,
-            author:users!comments_user_id_fkey ( name, photo, email, role )
-          `)
+          .select('id, text, created_at, user_id')
           .eq('post_id', postId)
           .order('created_at', { ascending: true });
 
         if (error) {
           console.warn('Error cargando comentarios:', error);
-          const { data: fallback } = await supabase
-            .from('comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
-          if (fallback) {
-            setComments(fallback.map((c) => ({
-              ...c, author: { name: 'Usuario', photo: null, email: null, role: null },
-            })));
-          }
           setLoading(false);
           return;
         }
 
-        setComments((data ?? []).map((c) => {
-          const authorRaw = Array.isArray(c.author) ? c.author[0] : c.author;
-          return {
-            id: c.id, text: c.text, created_at: c.created_at, user_id: c.user_id,
-            author: authorRaw
-              ? { name: authorRaw.name, photo: authorRaw.photo, email: authorRaw.email, role: authorRaw.role }
-              : { name: 'Usuario', photo: null, email: null, role: null },
-          };
-        }));
+        if (!data || data.length === 0) {
+          setComments([]);
+          setLoading(false);
+          return;
+        }
+
+        const uniqueUserIds = [...new Set(data.map((c) => c.user_id).filter(Boolean))];
+        const authorsMap: Record<string, PostAuthor> = {};
+        if (uniqueUserIds.length > 0) {
+          const { data: usersData } = await supabase
+            .from('users')
+            .select('id, name, photo, email, role')
+            .in('id', uniqueUserIds);
+          (usersData ?? []).forEach((u) => {
+            authorsMap[u.id] = { name: u.name, photo: u.photo, email: u.email, role: u.role };
+          });
+        }
+
+        setComments(data.map((c) => ({
+          id: c.id, text: c.text, created_at: c.created_at, user_id: c.user_id,
+          author: authorsMap[c.user_id] || { name: null, photo: null, email: null, role: null },
+        })));
       } catch (e) {
         console.warn('Error inesperado cargando comentarios:', e);
       } finally {
