@@ -53,7 +53,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontFamily: 'var(--fd)', fontWeight: 900, fontSize: '0.9rem',
           color: '#0a0a0f', letterSpacing: '-0.05em',
-          boxShadow: '0 4px 16px rgba(232,168,56,0.22)',
+          boxShadow: '0 4px 16px rgba(34,197,94,0.22)',
         }}>S</div>
         <span>SASIM</span>
       </a>
@@ -73,7 +73,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
             {role === 'admin' && (
               <span style={{
                 padding: '3px 10px', borderRadius: 'var(--radius-full)',
-                background: 'rgba(232,168,56,0.2)', border: '1px solid rgba(232,168,56,0.4)',
+                background: 'rgba(34,197,94,0.2)', border: '1px solid rgba(34,197,94,0.4)',
                 fontSize: '0.7rem', fontWeight: 800, color: '#22C55E',
                 letterSpacing: '0.05em', textTransform: 'uppercase',
               }}>Admin</span>
