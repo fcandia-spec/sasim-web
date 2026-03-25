@@ -23,7 +23,7 @@ export function fmtTime(ts: number): string {
 export const TAG_CLASS: Record<string, string> = {
   dibujo: 'bg-red-500/15 text-red-400',
   ia: 'bg-green-500/15 text-green-400',
-  familia: 'bg-amber-500/15 text-amber-400',
+  familia: 'bg-emerald-500/15 text-emerald-400',
   tech: 'bg-purple-500/15 text-purple-400',
 };
 

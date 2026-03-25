@@ -7,7 +7,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 
 const ROLE_STYLES: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  admin: { label: 'Admin', bg: 'rgba(232,168,56,0.2)', color: '#E8A838', border: 'rgba(232,168,56,0.4)' },
+  admin: { label: 'Admin', bg: 'rgba(34,197,94,0.2)', color: '#22C55E', border: 'rgba(34,197,94,0.4)' },
   subscriber: { label: 'Suscriptor', bg: 'rgba(34,197,94,0.15)', color: '#22C55E', border: 'rgba(34,197,94,0.3)' },
   visitor: { label: 'Visitante', bg: 'var(--bg-el)', color: 'var(--tm)', border: 'var(--border)' },
 };
@@ -92,7 +92,7 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
         ) : (
           <div style={{
             width: '100%', height: '100%', borderRadius: '50%',
-            background: '#E8A838',
+            background: '#22C55E',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontWeight: 900, fontSize: '0.85rem', color: '#0a0a0f',
           }}>{name.charAt(0).toUpperCase()}</div>
@@ -141,7 +141,7 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
           {/* Suscripción — sin estrella */}
           {role === 'visitor' && (
             <button role="menuitem" onClick={() => handleAction('suscribirse')}
-              style={{ ...itemStyle, color: '#E8A838' }}>
+              style={{ ...itemStyle, color: '#22C55E' }}>
               <span style={{ width: 20, textAlign: 'center' }}>💎</span> Suscribirse
             </button>
           )}
