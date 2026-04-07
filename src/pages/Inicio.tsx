@@ -18,20 +18,12 @@ export default function Inicio({ onNavigate }: Props) {
             borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800,
             letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--acc)',
             background: 'var(--acc-s)', marginBottom: 30,
-          }}>Un lugar para aprender en familia.</div>
+          }}>Aprende en familia.</div>
           <h1 style={{
             fontFamily: 'var(--fd)', fontSize: 'clamp(3.5rem,9vw,7rem)',
             fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.05em',
             color: 'var(--acc)', marginBottom: 6,
           }}>SASIM</h1>
-          <p style={{
-            fontSize: 'clamp(0.85rem,1.5vw,1rem)', color: 'var(--tm)',
-            letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 28,
-          }}>Contenido Gratuito · Cursos para toda la Familia · Practica en comunidad</p>
-          <p style={{ fontSize: '1.1rem', color: 'var(--tm)', maxWidth: 540, margin: '0 auto 44px', lineHeight: 1.75 }}>
-            Hoy se educan los arquitectos del mañana.<br/>
-            <strong style={{ color: 'var(--tp)' }}>Eduquemos concientes, creando paso a paso.</strong>
-          </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => onNavigate('cursos')} style={{
               padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
@@ -49,7 +41,7 @@ export default function Inicio({ onNavigate }: Props) {
         display: 'flex', justifyContent: 'center', padding: '40px 32px',
         borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)',
       }}>
-        {[{ n: '7', l: 'Cursos' }, { n: '3', l: 'Juegos' }, { n: '2', l: 'Planes' }, { n: '∞', l: 'Posibilidades' }].map((s, i) => (
+        {[{ n: '7', l: 'Cursos' }, { n: '3', l: 'Juegos' }, { n: '2', l: 'Planes' }].map((s, i) => (
           <div key={i} style={{
             flex: 1, maxWidth: 200, textAlign: 'center', padding: '24px 16px',
             borderRight: i < 3 ? '1px solid var(--border)' : 'none',
