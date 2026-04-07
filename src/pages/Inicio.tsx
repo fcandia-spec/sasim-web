@@ -18,7 +18,7 @@ export default function Inicio({ onNavigate }: Props) {
             borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800,
             letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--acc)',
             background: 'var(--acc-s)', marginBottom: 30,
-          }}>✦ Sabiduría Simple</div>
+          }}>Un lugar para aprender en familia.</div>
           <h1 style={{
             fontFamily: 'var(--fd)', fontSize: 'clamp(3.5rem,9vw,7rem)',
             fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.05em',
@@ -27,10 +27,10 @@ export default function Inicio({ onNavigate }: Props) {
           <p style={{
             fontSize: 'clamp(0.85rem,1.5vw,1rem)', color: 'var(--tm)',
             letterSpacing: '0.04em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 28,
-          }}>Tecnología · Familia · Aprendizaje</p>
+          }}>Contenido Gratuito · Cursos para toda la Familia · Practica en comunidad</p>
           <p style={{ fontSize: '1.1rem', color: 'var(--tm)', maxWidth: 540, margin: '0 auto 44px', lineHeight: 1.75 }}>
-            Con la tecnología cada vez más potente, tu hijo podría ser la próxima gran mente.<br/>
-            <strong style={{ color: 'var(--tp)' }}>Podrías creerlo, si creyeras en ti.</strong>
+            Hoy se educan los arquitectos del mañana.<br/>
+            <strong style={{ color: 'var(--tp)' }}>Eduquemos concientes, creando paso a paso.</strong>
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => onNavigate('cursos')} style={{
