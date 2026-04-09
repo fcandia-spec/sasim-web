@@ -5,7 +5,7 @@ export default function Inicio({ onNavigate }: Props) {
     <>
       <section style={{
         minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', padding: '80px 32px 60px',
+        alignItems: 'center', justifyContent: 'center', padding: '140px 32px 100px',
         textAlign: 'center', position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
@@ -26,7 +26,7 @@ export default function Inicio({ onNavigate }: Props) {
           }}>SASIM</h1>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => onNavigate('cursos')} style={{
-              padding: '28px 64px', background: 'var(--acc)', color: 'var(--bg)',
+              padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
               borderRadius: 9, fontWeight: 800, fontSize: '0.95rem',
               boxShadow: '0 4px 20px var(--acc-g)',
             }}>Explorar cursos →</button>
