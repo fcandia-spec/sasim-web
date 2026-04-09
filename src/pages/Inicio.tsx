@@ -18,7 +18,7 @@ export default function Inicio({ onNavigate }: Props) {
             borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800,
             letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--acc)',
             background: 'var(--acc-s)', marginBottom: 30,
-          }}>Aprende en familia.</div>
+          }}>Aprende en familia</div>
           <h1 style={{
             fontFamily: 'var(--fd)', fontSize: 'clamp(3.5rem,9vw,7rem)',
             fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.05em',
@@ -26,7 +26,7 @@ export default function Inicio({ onNavigate }: Props) {
           }}>SASIM</h1>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => onNavigate('cursos')} style={{
-              padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
+              padding: '28px 64px', background: 'var(--acc)', color: 'var(--bg)',
               borderRadius: 9, fontWeight: 800, fontSize: '0.95rem',
               boxShadow: '0 4px 20px var(--acc-g)',
             }}>Explorar cursos →</button>
