@@ -25,7 +25,7 @@ export default function Nosotros() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(260px,1fr))', gap: 20, marginBottom: 48 }}>
         {CARDS.map(c => (
           <div key={c.title} style={{ padding: 28, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: 14 }}>{c.icon}</div>
+
             <h3 style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 10, color: 'var(--acc)' }}>{c.title}</h3>
             <p style={{ fontSize: '0.88rem', color: 'var(--tm)', lineHeight: 1.7 }}>{c.text}</p>
           </div>
