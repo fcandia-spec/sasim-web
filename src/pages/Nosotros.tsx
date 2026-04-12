@@ -1,8 +1,8 @@
 const CARDS = [
-  { icon: '🎯', title: 'Misión', text: 'Democratizar el acceso al conocimiento tecnológico y creativo para familias hispanohablantes, cerrando la brecha digital con contenido cercano, práctico y de calidad.' },
-  { icon: '🔭', title: 'Visión', text: 'Ser la plataforma de referencia en educación digital familiar en Latinoamérica, donde padres e hijos aprenden juntos y transforman la tecnología en una herramienta de crecimiento.' },
-  { icon: '💛', title: 'Valores', text: 'Cercanía, honestidad, curiosidad, perseverancia e inclusión. Creemos que cada persona tiene el potencial de aprender y crecer sin importar su punto de partida.' },
-  { icon: '🚀', title: 'Objetivos', text: 'Crear cursos accesibles sobre IA, programación y arte digital. Construir una comunidad activa de padres y educadores. Desarrollar herramientas interactivas de aprendizaje.' },
+  { title: 'Misión', text: 'Democratizar el acceso al conocimiento tecnológico y creativo para familias hispanohablantes, cerrando la brecha digital con contenido cercano, práctico y de calidad.' },
+  { title: 'Visión', text: 'Ser la plataforma de referencia en educación digital familiar en Latinoamérica, donde padres e hijos aprenden juntos y transforman la tecnología en una herramienta de crecimiento.' },
+  { title: 'Valores', text: 'Cercanía, honestidad, curiosidad, perseverancia e inclusión. Creemos que cada persona tiene el potencial de aprender y crecer sin importar su punto de partida.' },
+  { title: 'Objetivos', text: 'Crear cursos accesibles sobre IA, programación y arte digital. Construir una comunidad activa de padres y educadores. Desarrollar herramientas interactivas de aprendizaje.' },
 ];
 
 const MAXIMAS = [
