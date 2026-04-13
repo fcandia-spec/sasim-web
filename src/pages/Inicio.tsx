@@ -22,7 +22,7 @@ export default function Inicio({ onNavigate }: Props) {
           <h1 style={{
             fontFamily: 'var(--fd)', fontSize: 'clamp(3.5rem,9vw,7rem)',
             fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.05em',
-            color: 'var(--acc)', marginBottom: 6,
+            color: 'var(--acc)', marginBottom: 32,
           }}>SASIM</h1>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => onNavigate('cursos')} style={{
