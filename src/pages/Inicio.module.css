@@ -1,0 +1,39 @@
+.scrollButton {
+  display: none;
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  font-size: 1.2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.scrollButton:hover {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--bg);
+}
+
+.scrollButtonLeft {
+  left: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.scrollButtonRight {
+  right: -50px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+@media (min-width: 768px) {
+  .scrollButton {
+    display: flex;
+  }
+}
