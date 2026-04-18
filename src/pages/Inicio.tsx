@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { XScroll } from '@/components/ui/x-scroll';
+import { Clock, Users, Star, Play } from 'lucide-react';
 import type { Curso, Post } from '@/types';
 
 interface Props { onNavigate: (p: string) => void; }
+
+// Datos de ejemplo para los cursos más vistos (simularemos estadísticas)
+const cursoStats: Record<string, { duration: string; students: number; rating: number; category: string }> = {
+  '1': { duration: '2h 15m', students: 1234, rating: 4.8, category: 'Matemáticas' },
+  '2': { duration: '1h 45m', students: 987, rating: 4.6, category: 'Ciencias' },
+  '3': { duration: '3h 00m', students: 2156, rating: 4.9, category: 'Lenguaje' },
+  '4': { duration: '2h 30m', students: 1567, rating: 4.7, category: 'Historia' },
+  '5': { duration: '1h 30m', students: 876, rating: 4.5, category: 'Arte' },
+  '6': { duration: '2h 00m', students: 1432, rating: 4.8, category: 'Música' },
+  '7': { duration: '1h 15m', students: 654, rating: 4.4, category: 'Tecnología' },
+};
 
 export default function Inicio({ onNavigate }: Props) {
   const [cursos, setCursos] = useState<Curso[]>([]);
@@ -53,18 +66,6 @@ export default function Inicio({ onNavigate }: Props) {
     fetchPosts();
   }, []);
 
-  const scroll = (direction: 'left' | 'right', section: 'cursos' | 'posts') => {
-    const container = document.getElementById(`scroll-${section}`);
-    if (!container) return;
-    
-    const scrollAmount = 280;
-    if (direction === 'left') {
-      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-    } else {
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   return (
     <>
       {/* Hero Section */}
@@ -94,7 +95,7 @@ export default function Inicio({ onNavigate }: Props) {
               padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
               borderRadius: 9, fontWeight: 800, fontSize: '0.95rem',
               boxShadow: '0 4px 20px var(--acc-g)', border: 'none', cursor: 'pointer',
-            }}>Explorar cursos →</button>
+            }}>Explorar cursos</button>
             <button onClick={() => onNavigate('blog')} style={{
               padding: '14px 32px', border: '1px solid var(--border)',
               borderRadius: 9, fontWeight: 700, fontSize: '0.95rem', color: 'var(--tm)',
@@ -121,121 +122,91 @@ export default function Inicio({ onNavigate }: Props) {
         ))}
       </div>
 
-      {/* Cursos Scroll Section */}
+      {/* Cursos Scroll Section - Mejorado con XScroll */}
       <section style={{ padding: '60px 32px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
         <div style={{ marginBottom: 24 }}>
           <h2 style={{
             fontFamily: 'var(--fd)', fontSize: '1.8rem', fontWeight: 900,
             letterSpacing: '-0.02em', marginBottom: 8,
           }}>
-            Cursos más <span style={{ color: 'var(--acc)' }}>recientes</span>
+            Cursos más <span style={{ color: 'var(--acc)' }}>populares</span>
           </h2>
-          <p style={{ color: 'var(--tm)', fontSize: '0.95rem' }}>Explora nuestras últimas adiciones</p>
+          <p style={{ color: 'var(--tm)', fontSize: '0.95rem' }}>Explora los favoritos de nuestra comunidad</p>
         </div>
 
-        {/* Scroll Container */}
-        <div style={{ position: 'relative' }}>
-          {/* Botones de scroll (solo desktop) */}
-          <button
-            onClick={() => scroll('left', 'cursos')}
-            style={{
-              display: 'none',
-              position: 'absolute', left: '-50px', top: '50%', transform: 'translateY(-50%)',
-              width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--border)',
-              background: 'var(--bg-card)', cursor: 'pointer',
-              zIndex: 10, transition: 'all 0.3s ease',
-              fontSize: '1.2rem',
-              '@media (min-width: 768px)': { display: 'flex' },
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--acc)';
-              e.currentTarget.style.borderColor = 'var(--acc)';
-              e.currentTarget.style.color = 'var(--bg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--bg-card)';
-              e.currentTarget.style.borderColor = 'var(--border)';
-            }}
-          >
-            ←
-          </button>
-
-          <div
-            id="scroll-cursos"
-            style={{
-              display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12,
-              scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'thin', scrollbarColor: 'var(--acc) transparent',
-            }}
-          >
-            {loadingCursos ? (
-              <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-                Cargando cursos...
-              </div>
-            ) : cursos.length === 0 ? (
-              <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-                No hay cursos disponibles
-              </div>
-            ) : (
-              cursos.map(curso => (
+        {loadingCursos ? (
+          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
+            Cargando cursos...
+          </div>
+        ) : cursos.length === 0 ? (
+          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
+            No hay cursos disponibles
+          </div>
+        ) : (
+          <XScroll scrollAmount={340}>
+            {cursos.map(curso => {
+              const stats = cursoStats[curso.id] || { duration: '2h 00m', students: 500, rating: 4.5, category: 'General' };
+              return (
                 <div
                   key={curso.id}
-                  style={{
-                    flex: '0 0 220px', minWidth: '220px',
-                    padding: 20, background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                    cursor: 'pointer', transition: 'all 0.3s ease',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    gap: 12, textAlign: 'center',
-                  }}
                   onClick={() => onNavigate('cursos')}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
+                  className="group relative flex-shrink-0 w-[280px] sm:w-[320px] rounded-xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+                  style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
                 >
-                  <div style={{ fontSize: '2.4rem' }}>{curso.icon}</div>
-                  <h3 style={{
-                    fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.95rem',
-                    margin: 0, color: 'var(--txt)', lineHeight: 1.3,
-                  }}>
-                    {curso.title}
-                  </h3>
-                </div>
-              ))
-            )}
-          </div>
+                  {/* Thumbnail con icono */}
+                  <div className="relative aspect-video overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.05) 100%)' }}>
+                    <div className="h-full w-full flex items-center justify-center">
+                      <span className="text-6xl transform transition-transform duration-500 group-hover:scale-125">{curso.icon}</span>
+                    </div>
 
-          <button
-            onClick={() => scroll('right', 'cursos')}
-            style={{
-              display: 'none',
-              position: 'absolute', right: '-50px', top: '50%', transform: 'translateY(-50%)',
-              width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--border)',
-              background: 'var(--bg-card)', cursor: 'pointer',
-              zIndex: 10, transition: 'all 0.3s ease',
-              fontSize: '1.2rem',
-              '@media (min-width: 768px)': { display: 'flex' },
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--acc)';
-              e.currentTarget.style.borderColor = 'var(--acc)';
-              e.currentTarget.style.color = 'var(--bg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--bg-card)';
-              e.currentTarget.style.borderColor = 'var(--border)';
-            }}
-          >
-            →
-          </button>
-        </div>
+                    {/* Play overlay on hover */}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="h-14 w-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-110">
+                        <Play className="h-6 w-6 ml-1" style={{ color: 'var(--acc)' }} fill="currentColor" />
+                      </div>
+                    </div>
+
+                    {/* Category badge */}
+                    <span className="absolute top-3 left-3 px-2.5 py-1 text-xs font-medium rounded-full shadow-sm" style={{ background: 'var(--bg)', color: 'var(--txt)' }}>
+                      {stats.category}
+                    </span>
+
+                    {/* Duration badge */}
+                    <span className="absolute bottom-3 right-3 px-2 py-1 text-xs font-medium bg-black/70 text-white rounded-md flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {stats.duration}
+                    </span>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-4">
+                    <h3 className="font-semibold line-clamp-2 leading-snug mb-2 transition-colors" style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}>
+                      {curso.title}
+                    </h3>
+
+                    <p className="text-sm mb-3" style={{ color: 'var(--tm)' }}>SASIM Academy</p>
+
+                    {/* Stats row */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-1" style={{ color: 'var(--acc)' }}>
+                        <Star className="h-4 w-4" fill="currentColor" />
+                        <span className="font-medium">{stats.rating.toFixed(1)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-1" style={{ color: 'var(--tm)' }}>
+                        <Users className="h-4 w-4" />
+                        <span>{stats.students.toLocaleString()} estudiantes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom accent line */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" style={{ background: 'linear-gradient(to right, var(--acc), rgba(232,168,56,0.6))' }} />
+                </div>
+              );
+            })}
+          </XScroll>
+        )}
 
         <button
           onClick={() => onNavigate('cursos')}
@@ -256,7 +227,7 @@ export default function Inicio({ onNavigate }: Props) {
             e.currentTarget.style.borderColor = 'var(--border)';
           }}
         >
-          Explorar todos los cursos →
+          Explorar cursos
         </button>
       </section>
 
@@ -275,108 +246,40 @@ export default function Inicio({ onNavigate }: Props) {
           <p style={{ color: 'var(--tm)', fontSize: '0.95rem' }}>Lee los artículos más recientes</p>
         </div>
 
-        {/* Scroll Container */}
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => scroll('left', 'posts')}
-            style={{
-              display: 'none',
-              position: 'absolute', left: '-50px', top: '50%', transform: 'translateY(-50%)',
-              width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--border)',
-              background: 'var(--bg-card)', cursor: 'pointer',
-              zIndex: 10, transition: 'all 0.3s ease',
-              fontSize: '1.2rem',
-              '@media (min-width: 768px)': { display: 'flex' },
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--acc)';
-              e.currentTarget.style.borderColor = 'var(--acc)';
-              e.currentTarget.style.color = 'var(--bg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--bg-card)';
-              e.currentTarget.style.borderColor = 'var(--border)';
-            }}
-          >
-            ←
-          </button>
-
-          <div
-            id="scroll-posts"
-            style={{
-              display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 12,
-              scrollBehavior: 'smooth', WebkitOverflowScrolling: 'touch',
-              scrollbarWidth: 'thin', scrollbarColor: 'var(--acc) transparent',
-            }}
-          >
-            {loadingPosts ? (
-              <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-                Cargando posts...
-              </div>
-            ) : posts.length === 0 ? (
-              <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-                No hay posts disponibles
-              </div>
-            ) : (
-              posts.map(post => (
-                <div
-                  key={post.id}
-                  style={{
-                    flex: '0 0 240px', minWidth: '240px',
-                    padding: 24, background: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                    cursor: 'pointer', transition: 'all 0.3s ease',
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    gap: 12, textAlign: 'center',
-                  }}
-                  onClick={() => onNavigate('blog')}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                >
-                  <div style={{ fontSize: '2.8rem' }}>📝</div>
-                  <h3 style={{
-                    fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.95rem',
-                    margin: 0, color: 'var(--txt)', lineHeight: 1.3,
-                  }}>
-                    {post.text}
-                  </h3>
-                </div>
-              ))
-            )}
+        {loadingPosts ? (
+          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
+            Cargando posts...
           </div>
-
-          <button
-            onClick={() => scroll('right', 'posts')}
-            style={{
-              display: 'none',
-              position: 'absolute', right: '-50px', top: '50%', transform: 'translateY(-50%)',
-              width: 40, height: 40, borderRadius: '50%', border: '1px solid var(--border)',
-              background: 'var(--bg-card)', cursor: 'pointer',
-              zIndex: 10, transition: 'all 0.3s ease',
-              fontSize: '1.2rem',
-              '@media (min-width: 768px)': { display: 'flex' },
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'var(--acc)';
-              e.currentTarget.style.borderColor = 'var(--acc)';
-              e.currentTarget.style.color = 'var(--bg)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'var(--bg-card)';
-              e.currentTarget.style.borderColor = 'var(--border)';
-            }}
-          >
-            →
-          </button>
-        </div>
+        ) : posts.length === 0 ? (
+          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
+            No hay posts disponibles
+          </div>
+        ) : (
+          <XScroll scrollAmount={280}>
+            {posts.map(post => (
+              <div
+                key={post.id}
+                onClick={() => onNavigate('blog')}
+                className="group flex-shrink-0 w-[240px] sm:w-[280px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                style={{
+                  padding: 24, background: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                  gap: 12, textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '2.8rem' }}>📝</div>
+                <h3 style={{
+                  fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.95rem',
+                  margin: 0, color: 'var(--txt)', lineHeight: 1.3,
+                }}>
+                  {post.text}
+                </h3>
+              </div>
+            ))}
+          </XScroll>
+        )}
 
         <button
           onClick={() => onNavigate('blog')}
@@ -397,7 +300,7 @@ export default function Inicio({ onNavigate }: Props) {
             e.currentTarget.style.borderColor = 'var(--border)';
           }}
         >
-          Leer más artículos →
+          Leer más artículos
         </button>
       </section>
     </>
