@@ -80,76 +80,78 @@ export default function Inicio({ onNavigate }: Props) {
           }}>SASIM</h1>
           
           {/* Scroll horizontal de cursos dentro del hero */}
-          <div style={{ margin: '0 -32px 32px', width: 'calc(100% + 64px)' }}>
-            <XScroll scrollAmount={200}>
-              {CURSOS.map(curso => {
-                const stats = cursoStats[curso.id] || { students: 500, rating: 4.5 };
-                const tagLabel = TAG_LABEL[curso.tag] || 'General';
-                return (
-                  <div
-                    key={curso.id}
-                    onClick={() => onNavigate('cursos')}
-                    className="group relative flex-shrink-0 w-[180px] sm:w-[220px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
-                    style={{
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                    }}
-                  >
-                    {/* Thumbnail con icono */}
-                    <div 
-                      className="relative aspect-[4/3] overflow-hidden flex items-center justify-center"
-                      style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
+          <div className="mx-auto w-full max-w-[90vw] rounded-lg border border-dashed mb-8" style={{ borderColor: 'var(--border)' }}>
+            <XScroll>
+              <div className="flex gap-4 p-6">
+                {CURSOS.map(curso => {
+                  const stats = cursoStats[curso.id] || { students: 500, rating: 4.5 };
+                  const tagLabel = TAG_LABEL[curso.tag] || 'General';
+                  return (
+                    <div
+                      key={curso.id}
+                      onClick={() => onNavigate('cursos')}
+                      className="group relative shrink-0 w-[180px] sm:w-[220px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl"
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                      }}
                     >
-                      <span className="text-5xl sm:text-6xl transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{curso.icon}</span>
-                      
-                      {/* Play overlay on hover */}
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <div className="h-12 w-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-                          <Play className="h-5 w-5 ml-0.5" style={{ color: 'var(--acc)' }} fill="currentColor" />
+                      {/* Thumbnail con icono */}
+                      <div 
+                        className="relative aspect-[4/3] overflow-hidden flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
+                      >
+                        <span className="text-5xl sm:text-6xl transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{curso.icon}</span>
+                        
+                        {/* Play overlay on hover */}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="h-12 w-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                            <Play className="h-5 w-5 ml-0.5" style={{ color: 'var(--acc)' }} fill="currentColor" />
+                          </div>
+                        </div>
+
+                        {/* Category badge */}
+                        <span 
+                          className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold rounded-full"
+                          style={{ background: 'var(--bg)', color: 'var(--acc)', fontSize: '0.65rem' }}
+                        >
+                          {tagLabel}
+                        </span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-3">
+                        <h3 
+                          className="font-bold text-sm line-clamp-1 mb-1"
+                          style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}
+                        >
+                          {curso.title}
+                        </h3>
+                        
+                        {/* Stats row */}
+                        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--tm)' }}>
+                          <div className="flex items-center gap-0.5" style={{ color: 'var(--acc)' }}>
+                            <Star className="h-3 w-3" fill="currentColor" />
+                            <span className="font-medium">{stats.rating}</span>
+                          </div>
+                          <span>·</span>
+                          <div className="flex items-center gap-0.5">
+                            <Users className="h-3 w-3" />
+                            <span>{stats.students.toLocaleString()}</span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Category badge */}
-                      <span 
-                        className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold rounded-full"
-                        style={{ background: 'var(--bg)', color: 'var(--acc)', fontSize: '0.65rem' }}
-                      >
-                        {tagLabel}
-                      </span>
+                      {/* Bottom accent line */}
+                      <div 
+                        className="absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                        style={{ background: 'var(--acc)' }}
+                      />
                     </div>
-
-                    {/* Content */}
-                    <div className="p-3">
-                      <h3 
-                        className="font-bold text-sm line-clamp-1 mb-1"
-                        style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}
-                      >
-                        {curso.title}
-                      </h3>
-                      
-                      {/* Stats row */}
-                      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--tm)' }}>
-                        <div className="flex items-center gap-0.5" style={{ color: 'var(--acc)' }}>
-                          <Star className="h-3 w-3" fill="currentColor" />
-                          <span className="font-medium">{stats.rating}</span>
-                        </div>
-                        <span>·</span>
-                        <div className="flex items-center gap-0.5">
-                          <Users className="h-3 w-3" />
-                          <span>{stats.students.toLocaleString()}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom accent line */}
-                    <div 
-                      className="absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
-                      style={{ background: 'var(--acc)' }}
-                    />
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </XScroll>
           </div>
 
@@ -205,61 +207,65 @@ export default function Inicio({ onNavigate }: Props) {
             Cargando posts...
           </div>
         ) : (
-          <XScroll scrollAmount={280}>
-            {(posts.length > 0 ? posts : SAMPLE_POSTS).map(post => (
-              <div
-                key={post.id}
-                onClick={() => onNavigate('blog')}
-                className="group flex-shrink-0 w-[240px] sm:w-[280px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                style={{
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  display: 'flex', flexDirection: 'column',
-                  overflow: 'hidden',
-                }}
-              >
-                {/* Header con icono */}
-                <div 
-                  className="relative aspect-[16/9] overflow-hidden flex items-center justify-center"
-                  style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
-                >
-                  <span className="text-4xl transform transition-transform duration-500 group-hover:scale-110">
-                    {'icon' in post ? post.icon : '📝'}
-                  </span>
-                </div>
-                
-                {/* Content */}
-                <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <h3 
-                    className="line-clamp-2"
+          <div className="w-full rounded-lg border border-dashed" style={{ borderColor: 'var(--border)' }}>
+            <XScroll>
+              <div className="flex gap-4 p-6">
+                {(posts.length > 0 ? posts : SAMPLE_POSTS).map(post => (
+                  <div
+                    key={post.id}
+                    onClick={() => onNavigate('blog')}
+                    className="group shrink-0 w-[240px] sm:w-[280px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                     style={{
-                      fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.9rem',
-                      margin: 0, color: 'var(--txt)', lineHeight: 1.4,
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      display: 'flex', flexDirection: 'column',
+                      overflow: 'hidden',
                     }}
                   >
-                    {post.text}
-                  </h3>
-                  {'tag' in post && (
-                    <span 
-                      style={{
-                        display: 'inline-block',
-                        width: 'fit-content',
-                        padding: '2px 8px',
-                        borderRadius: 'var(--radius-full)',
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        background: 'var(--acc-s)',
-                        color: 'var(--acc)',
-                      }}
+                    {/* Header con icono */}
+                    <div 
+                      className="relative aspect-[16/9] overflow-hidden flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
                     >
-                      {TAG_LABEL[post.tag] || post.tag}
-                    </span>
-                  )}
-                </div>
+                      <span className="text-4xl transform transition-transform duration-500 group-hover:scale-110">
+                        {'icon' in post ? post.icon : '📝'}
+                      </span>
+                    </div>
+                    
+                    {/* Content */}
+                    <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <h3 
+                        className="line-clamp-2"
+                        style={{
+                          fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.9rem',
+                          margin: 0, color: 'var(--txt)', lineHeight: 1.4,
+                        }}
+                      >
+                        {post.text}
+                      </h3>
+                      {'tag' in post && (
+                        <span 
+                          style={{
+                            display: 'inline-block',
+                            width: 'fit-content',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            background: 'var(--acc-s)',
+                            color: 'var(--acc)',
+                          }}
+                        >
+                          {TAG_LABEL[post.tag] || post.tag}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </XScroll>
+            </XScroll>
+          </div>
         )}
 
         <button
