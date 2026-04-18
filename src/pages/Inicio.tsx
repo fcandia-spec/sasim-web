@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { XScroll } from '@/components/ui/x-scroll';
-import { Clock, Users, Star, Play } from 'lucide-react';
+import { Users, Star, Play } from 'lucide-react';
 import type { Curso, Post } from '@/types';
 
 interface Props { onNavigate: (p: string) => void; }
@@ -71,25 +71,109 @@ export default function Inicio({ onNavigate }: Props) {
       {/* Hero Section */}
       <section style={{
         minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', padding: '140px 32px 100px',
+        alignItems: 'center', justifyContent: 'center', padding: '100px 0 80px',
         textAlign: 'center', position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
           position: 'absolute', inset: 0, zIndex: 0,
           background: 'radial-gradient(ellipse 80% 55% at 50% -5%,rgba(232,168,56,0.09) 0%,transparent 70%),radial-gradient(ellipse 45% 45% at 85% 85%,rgba(59,130,246,0.07) 0%,transparent 60%)',
         }} />
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: 780 }}>
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 1200, padding: '0 32px' }}>
           <div style={{
             display: 'inline-flex', padding: '5px 16px', border: '1px solid var(--bglow)',
             borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: 800,
             letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--acc)',
-            background: 'var(--acc-s)', marginBottom: 30,
+            background: 'var(--acc-s)', marginBottom: 24,
           }}>Aprende en familia</div>
           <h1 style={{
-            fontFamily: 'var(--fd)', fontSize: 'clamp(3.5rem,9vw,7rem)',
+            fontFamily: 'var(--fd)', fontSize: 'clamp(3rem,8vw,5.5rem)',
             fontWeight: 900, lineHeight: 0.95, letterSpacing: '-0.05em',
-            color: 'var(--acc)', marginBottom: 32,
+            color: 'var(--acc)', marginBottom: 24,
           }}>SASIM</h1>
+          
+          {/* Scroll horizontal de cursos dentro del hero */}
+          <div style={{ margin: '0 -32px 32px', width: 'calc(100% + 64px)' }}>
+            {loadingCursos ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--tm)' }}>
+                Cargando cursos...
+              </div>
+            ) : cursos.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--tm)' }}>
+                No hay cursos disponibles
+              </div>
+            ) : (
+              <XScroll scrollAmount={200}>
+                {cursos.map(curso => {
+                  const stats = cursoStats[curso.id] || { duration: '2h 00m', students: 500, rating: 4.5, category: 'General' };
+                  return (
+                    <div
+                      key={curso.id}
+                      onClick={() => onNavigate('cursos')}
+                      className="group relative flex-shrink-0 w-[180px] sm:w-[220px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                      }}
+                    >
+                      {/* Thumbnail con icono */}
+                      <div 
+                        className="relative aspect-[4/3] overflow-hidden flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
+                      >
+                        <span className="text-5xl sm:text-6xl transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{curso.icon}</span>
+                        
+                        {/* Play overlay on hover */}
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <div className="h-12 w-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                            <Play className="h-5 w-5 ml-0.5" style={{ color: 'var(--acc)' }} fill="currentColor" />
+                          </div>
+                        </div>
+
+                        {/* Category badge */}
+                        <span 
+                          className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold rounded-full"
+                          style={{ background: 'var(--bg)', color: 'var(--acc)', fontSize: '0.65rem' }}
+                        >
+                          {stats.category}
+                        </span>
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-3">
+                        <h3 
+                          className="font-bold text-sm line-clamp-1 mb-1"
+                          style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}
+                        >
+                          {curso.title}
+                        </h3>
+                        
+                        {/* Stats row */}
+                        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--tm)' }}>
+                          <div className="flex items-center gap-0.5" style={{ color: 'var(--acc)' }}>
+                            <Star className="h-3 w-3" fill="currentColor" />
+                            <span className="font-medium">{stats.rating}</span>
+                          </div>
+                          <span>·</span>
+                          <div className="flex items-center gap-0.5">
+                            <Users className="h-3 w-3" />
+                            <span>{stats.students.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom accent line */}
+                      <div 
+                        className="absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                        style={{ background: 'var(--acc)' }}
+                      />
+                    </div>
+                  );
+                })}
+              </XScroll>
+            )}
+          </div>
+
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => onNavigate('cursos')} style={{
               padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
@@ -121,115 +205,6 @@ export default function Inicio({ onNavigate }: Props) {
           </div>
         ))}
       </div>
-
-      {/* Cursos Scroll Section - Mejorado con XScroll */}
-      <section style={{ padding: '60px 32px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{
-            fontFamily: 'var(--fd)', fontSize: '1.8rem', fontWeight: 900,
-            letterSpacing: '-0.02em', marginBottom: 8,
-          }}>
-            Cursos más <span style={{ color: 'var(--acc)' }}>populares</span>
-          </h2>
-          <p style={{ color: 'var(--tm)', fontSize: '0.95rem' }}>Explora los favoritos de nuestra comunidad</p>
-        </div>
-
-        {loadingCursos ? (
-          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-            Cargando cursos...
-          </div>
-        ) : cursos.length === 0 ? (
-          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-            No hay cursos disponibles
-          </div>
-        ) : (
-          <XScroll scrollAmount={340}>
-            {cursos.map(curso => {
-              const stats = cursoStats[curso.id] || { duration: '2h 00m', students: 500, rating: 4.5, category: 'General' };
-              return (
-                <div
-                  key={curso.id}
-                  onClick={() => onNavigate('cursos')}
-                  className="group relative flex-shrink-0 w-[280px] sm:w-[320px] rounded-xl overflow-hidden bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 cursor-pointer"
-                  style={{ borderColor: 'var(--border)', background: 'var(--bg-card)' }}
-                >
-                  {/* Thumbnail con icono */}
-                  <div className="relative aspect-video overflow-hidden" style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.05) 100%)' }}>
-                    <div className="h-full w-full flex items-center justify-center">
-                      <span className="text-6xl transform transition-transform duration-500 group-hover:scale-125">{curso.icon}</span>
-                    </div>
-
-                    {/* Play overlay on hover */}
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="h-14 w-14 rounded-full bg-white/95 flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-110">
-                        <Play className="h-6 w-6 ml-1" style={{ color: 'var(--acc)' }} fill="currentColor" />
-                      </div>
-                    </div>
-
-                    {/* Category badge */}
-                    <span className="absolute top-3 left-3 px-2.5 py-1 text-xs font-medium rounded-full shadow-sm" style={{ background: 'var(--bg)', color: 'var(--txt)' }}>
-                      {stats.category}
-                    </span>
-
-                    {/* Duration badge */}
-                    <span className="absolute bottom-3 right-3 px-2 py-1 text-xs font-medium bg-black/70 text-white rounded-md flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {stats.duration}
-                    </span>
-                  </div>
-
-                  {/* Content */}
-                  <div className="p-4">
-                    <h3 className="font-semibold line-clamp-2 leading-snug mb-2 transition-colors" style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}>
-                      {curso.title}
-                    </h3>
-
-                    <p className="text-sm mb-3" style={{ color: 'var(--tm)' }}>SASIM Academy</p>
-
-                    {/* Stats row */}
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-1" style={{ color: 'var(--acc)' }}>
-                        <Star className="h-4 w-4" fill="currentColor" />
-                        <span className="font-medium">{stats.rating.toFixed(1)}</span>
-                      </div>
-
-                      <div className="flex items-center gap-1" style={{ color: 'var(--tm)' }}>
-                        <Users className="h-4 w-4" />
-                        <span>{stats.students.toLocaleString()} estudiantes</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Bottom accent line */}
-                  <div className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" style={{ background: 'linear-gradient(to right, var(--acc), rgba(232,168,56,0.6))' }} />
-                </div>
-              );
-            })}
-          </XScroll>
-        )}
-
-        <button
-          onClick={() => onNavigate('cursos')}
-          style={{
-            marginTop: 32, padding: '12px 28px', background: 'transparent',
-            border: '1px solid var(--border)', borderRadius: 8, fontWeight: 700,
-            fontSize: '0.9rem', color: 'var(--tm)', cursor: 'pointer',
-            transition: 'all 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--acc)';
-            e.currentTarget.style.color = 'var(--bg)';
-            e.currentTarget.style.borderColor = 'var(--acc)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'var(--tm)';
-            e.currentTarget.style.borderColor = 'var(--border)';
-          }}
-        >
-          Explorar cursos
-        </button>
-      </section>
 
       {/* Blog Section */}
       <section style={{
