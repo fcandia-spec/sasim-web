@@ -2,47 +2,35 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { XScroll } from '@/components/ui/x-scroll';
 import { Users, Star, Play } from 'lucide-react';
-import type { Curso, Post } from '@/types';
+import { CURSOS } from '@/data/content';
+import { TAG_LABEL } from '@/lib/utils';
+import type { Post } from '@/types';
 
 interface Props { onNavigate: (p: string) => void; }
 
 // Datos de ejemplo para los cursos más vistos (simularemos estadísticas)
-const cursoStats: Record<string, { duration: string; students: number; rating: number; category: string }> = {
-  '1': { duration: '2h 15m', students: 1234, rating: 4.8, category: 'Matemáticas' },
-  '2': { duration: '1h 45m', students: 987, rating: 4.6, category: 'Ciencias' },
-  '3': { duration: '3h 00m', students: 2156, rating: 4.9, category: 'Lenguaje' },
-  '4': { duration: '2h 30m', students: 1567, rating: 4.7, category: 'Historia' },
-  '5': { duration: '1h 30m', students: 876, rating: 4.5, category: 'Arte' },
-  '6': { duration: '2h 00m', students: 1432, rating: 4.8, category: 'Música' },
-  '7': { duration: '1h 15m', students: 654, rating: 4.4, category: 'Tecnología' },
+const cursoStats: Record<string, { students: number; rating: number }> = {
+  'adopcion-digital': { students: 1234, rating: 4.8 },
+  'dibujo-neuroplasticidad': { students: 987, rating: 4.6 },
+  'alfabetizacion-padres': { students: 2156, rating: 4.9 },
+  'curso-gemini': { students: 1567, rating: 4.7 },
+  'curso-chatgpt': { students: 876, rating: 4.5 },
+  'curso-claude': { students: 1432, rating: 4.8 },
+  'curso-python': { students: 654, rating: 4.4 },
 };
 
+// Posts de ejemplo para mostrar cuando no hay datos de Supabase
+const SAMPLE_POSTS = [
+  { id: '1', text: 'Cómo la tecnología puede fortalecer los lazos familiares en la era digital', tag: 'familia', icon: '👨‍👩‍👧' },
+  { id: '2', text: 'Técnicas de dibujo para desarrollar la creatividad en niños', tag: 'dibujo', icon: '🎨' },
+  { id: '3', text: 'Introducción a la inteligencia artificial para padres curiosos', tag: 'ia', icon: '🤖' },
+  { id: '4', text: 'Python para principiantes: primeros pasos en programación', tag: 'tech', icon: '🐍' },
+  { id: '5', text: 'Neuroplasticidad: cómo el arte transforma nuestro cerebro', tag: 'dibujo', icon: '🧠' },
+];
+
 export default function Inicio({ onNavigate }: Props) {
-  const [cursos, setCursos] = useState<Curso[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
-  const [loadingCursos, setLoadingCursos] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
-
-  // Fetch cursos desde Supabase
-  useEffect(() => {
-    const fetchCursos = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('cursos')
-          .select('id, icon, title')
-          .limit(7);
-        
-        if (error) throw error;
-        setCursos(data || []);
-      } catch (error) {
-        console.error('Error cargando cursos:', error);
-      } finally {
-        setLoadingCursos(false);
-      }
-    };
-
-    fetchCursos();
-  }, []);
 
   // Fetch posts desde Supabase
   useEffect(() => {
@@ -93,85 +81,76 @@ export default function Inicio({ onNavigate }: Props) {
           
           {/* Scroll horizontal de cursos dentro del hero */}
           <div style={{ margin: '0 -32px 32px', width: 'calc(100% + 64px)' }}>
-            {loadingCursos ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--tm)' }}>
-                Cargando cursos...
-              </div>
-            ) : cursos.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--tm)' }}>
-                No hay cursos disponibles
-              </div>
-            ) : (
-              <XScroll scrollAmount={200}>
-                {cursos.map(curso => {
-                  const stats = cursoStats[curso.id] || { duration: '2h 00m', students: 500, rating: 4.5, category: 'General' };
-                  return (
-                    <div
-                      key={curso.id}
-                      onClick={() => onNavigate('cursos')}
-                      className="group relative flex-shrink-0 w-[180px] sm:w-[220px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
-                      style={{
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border)',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                      }}
+            <XScroll scrollAmount={200}>
+              {CURSOS.map(curso => {
+                const stats = cursoStats[curso.id] || { students: 500, rating: 4.5 };
+                const tagLabel = TAG_LABEL[curso.tag] || 'General';
+                return (
+                  <div
+                    key={curso.id}
+                    onClick={() => onNavigate('cursos')}
+                    className="group relative flex-shrink-0 w-[180px] sm:w-[220px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105"
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border)',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    {/* Thumbnail con icono */}
+                    <div 
+                      className="relative aspect-[4/3] overflow-hidden flex items-center justify-center"
+                      style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
                     >
-                      {/* Thumbnail con icono */}
-                      <div 
-                        className="relative aspect-[4/3] overflow-hidden flex items-center justify-center"
-                        style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
+                      <span className="text-5xl sm:text-6xl transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{curso.icon}</span>
+                      
+                      {/* Play overlay on hover */}
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="h-12 w-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+                          <Play className="h-5 w-5 ml-0.5" style={{ color: 'var(--acc)' }} fill="currentColor" />
+                        </div>
+                      </div>
+
+                      {/* Category badge */}
+                      <span 
+                        className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold rounded-full"
+                        style={{ background: 'var(--bg)', color: 'var(--acc)', fontSize: '0.65rem' }}
                       >
-                        <span className="text-5xl sm:text-6xl transform transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">{curso.icon}</span>
-                        
-                        {/* Play overlay on hover */}
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="h-12 w-12 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
-                            <Play className="h-5 w-5 ml-0.5" style={{ color: 'var(--acc)' }} fill="currentColor" />
-                          </div>
-                        </div>
-
-                        {/* Category badge */}
-                        <span 
-                          className="absolute top-2 left-2 px-2 py-0.5 text-xs font-semibold rounded-full"
-                          style={{ background: 'var(--bg)', color: 'var(--acc)', fontSize: '0.65rem' }}
-                        >
-                          {stats.category}
-                        </span>
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-3">
-                        <h3 
-                          className="font-bold text-sm line-clamp-1 mb-1"
-                          style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}
-                        >
-                          {curso.title}
-                        </h3>
-                        
-                        {/* Stats row */}
-                        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--tm)' }}>
-                          <div className="flex items-center gap-0.5" style={{ color: 'var(--acc)' }}>
-                            <Star className="h-3 w-3" fill="currentColor" />
-                            <span className="font-medium">{stats.rating}</span>
-                          </div>
-                          <span>·</span>
-                          <div className="flex items-center gap-0.5">
-                            <Users className="h-3 w-3" />
-                            <span>{stats.students.toLocaleString()}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom accent line */}
-                      <div 
-                        className="absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
-                        style={{ background: 'var(--acc)' }}
-                      />
+                        {tagLabel}
+                      </span>
                     </div>
-                  );
-                })}
-              </XScroll>
-            )}
+
+                    {/* Content */}
+                    <div className="p-3">
+                      <h3 
+                        className="font-bold text-sm line-clamp-1 mb-1"
+                        style={{ color: 'var(--txt)', fontFamily: 'var(--fd)' }}
+                      >
+                        {curso.title}
+                      </h3>
+                      
+                      {/* Stats row */}
+                      <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--tm)' }}>
+                        <div className="flex items-center gap-0.5" style={{ color: 'var(--acc)' }}>
+                          <Star className="h-3 w-3" fill="currentColor" />
+                          <span className="font-medium">{stats.rating}</span>
+                        </div>
+                        <span>·</span>
+                        <div className="flex items-center gap-0.5">
+                          <Users className="h-3 w-3" />
+                          <span>{stats.students.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom accent line */}
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 h-0.5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
+                      style={{ background: 'var(--acc)' }}
+                    />
+                  </div>
+                );
+              })}
+            </XScroll>
           </div>
 
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -225,32 +204,59 @@ export default function Inicio({ onNavigate }: Props) {
           <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
             Cargando posts...
           </div>
-        ) : posts.length === 0 ? (
-          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-            No hay posts disponibles
-          </div>
         ) : (
           <XScroll scrollAmount={280}>
-            {posts.map(post => (
+            {(posts.length > 0 ? posts : SAMPLE_POSTS).map(post => (
               <div
                 key={post.id}
                 onClick={() => onNavigate('blog')}
                 className="group flex-shrink-0 w-[240px] sm:w-[280px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
                 style={{
-                  padding: 24, background: 'var(--bg-card)',
+                  background: 'var(--bg-card)',
                   border: '1px solid var(--border)',
                   display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center',
-                  gap: 12, textAlign: 'center',
+                  overflow: 'hidden',
                 }}
               >
-                <div style={{ fontSize: '2.8rem' }}>📝</div>
-                <h3 style={{
-                  fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.95rem',
-                  margin: 0, color: 'var(--txt)', lineHeight: 1.3,
-                }}>
-                  {post.text}
-                </h3>
+                {/* Header con icono */}
+                <div 
+                  className="relative aspect-[16/9] overflow-hidden flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
+                >
+                  <span className="text-4xl transform transition-transform duration-500 group-hover:scale-110">
+                    {'icon' in post ? post.icon : '📝'}
+                  </span>
+                </div>
+                
+                {/* Content */}
+                <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h3 
+                    className="line-clamp-2"
+                    style={{
+                      fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.9rem',
+                      margin: 0, color: 'var(--txt)', lineHeight: 1.4,
+                    }}
+                  >
+                    {post.text}
+                  </h3>
+                  {'tag' in post && (
+                    <span 
+                      style={{
+                        display: 'inline-block',
+                        width: 'fit-content',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        background: 'var(--acc-s)',
+                        color: 'var(--acc)',
+                      }}
+                    >
+                      {TAG_LABEL[post.tag] || post.tag}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </XScroll>
