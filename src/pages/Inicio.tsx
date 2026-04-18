@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { XScroll } from '@/components/ui/x-scroll';
+import XScroll from '@/components/ui/x-scroll';
 import { Users, Star, Play } from 'lucide-react';
 import { CURSOS } from '@/data/content';
 import { TAG_LABEL } from '@/lib/utils';
@@ -80,7 +80,7 @@ export default function Inicio({ onNavigate }: Props) {
           }}>SASIM</h1>
           
           {/* Scroll horizontal de cursos dentro del hero */}
-          <div className="mx-auto w-full max-w-[90vw] rounded-lg border border-dashed mb-8" style={{ borderColor: 'var(--border)' }}>
+          <div className="mx-auto w-full mb-8">
             <XScroll>
               <div className="flex gap-4 p-6">
                 {CURSOS.map(curso => {
@@ -207,7 +207,7 @@ export default function Inicio({ onNavigate }: Props) {
             Cargando posts...
           </div>
         ) : (
-          <div className="w-full rounded-lg border border-dashed" style={{ borderColor: 'var(--border)' }}>
+          <div className="w-full">
             <XScroll>
               <div className="flex gap-4 p-6">
                 {(posts.length > 0 ? posts : SAMPLE_POSTS).map(post => (
