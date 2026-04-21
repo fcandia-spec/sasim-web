@@ -4,7 +4,13 @@ import XScroll from '@/components/ui/x-scroll';
 import { Users, Star, Play } from 'lucide-react';
 import { CURSOS } from '@/data/content';
 import { TAG_LABEL } from '@/lib/utils';
-import type { Post } from '@/types';
+
+type HeroPost = {
+  id: string;
+  text: string;
+  tag?: string;
+  icon?: string;
+};
 
 interface Props { onNavigate: (p: string) => void; }
 
@@ -29,7 +35,7 @@ const SAMPLE_POSTS = [
 ];
 
 export default function Inicio({ onNavigate }: Props) {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<HeroPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
   // Fetch posts desde Supabase
