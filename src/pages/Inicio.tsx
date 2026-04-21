@@ -155,7 +155,7 @@ export default function Inicio({ onNavigate }: Props) {
             </XScroll>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
             <button onClick={() => onNavigate('cursos')} style={{
               padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
               borderRadius: 9, fontWeight: 800, fontSize: '0.95rem',
@@ -230,7 +230,7 @@ export default function Inicio({ onNavigate }: Props) {
             )}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
             <button onClick={() => onNavigate('blog')} style={{
               padding: '14px 32px', border: '1px solid var(--border)',
               borderRadius: 9, fontWeight: 700, fontSize: '0.95rem', color: 'var(--tm)',
@@ -257,109 +257,6 @@ export default function Inicio({ onNavigate }: Props) {
         ))}
       </div>
 
-      {/* Blog Section */}
-      <section style={{
-        padding: '60px 32px', maxWidth: '1200px', margin: '0 auto', width: '100%',
-        borderTop: '1px solid var(--border)',
-      }}>
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{
-            fontFamily: 'var(--fd)', fontSize: '1.8rem', fontWeight: 900,
-            letterSpacing: '-0.02em', marginBottom: 8,
-          }}>
-            Del <span style={{ color: 'var(--acc)' }}>blog</span>
-          </h2>
-          <p style={{ color: 'var(--tm)', fontSize: '0.95rem' }}>Lee los artículos más recientes</p>
-        </div>
-
-        {loadingPosts ? (
-          <div style={{ width: '100%', textAlign: 'center', padding: '32px', color: 'var(--tm)' }}>
-            Cargando posts...
-          </div>
-        ) : (
-          <div className="w-full">
-            <XScroll>
-              <div className="flex gap-4 p-6">
-                {(posts.length > 0 ? posts : SAMPLE_POSTS).map(post => (
-                  <div
-                    key={post.id}
-                    onClick={() => onNavigate('blog')}
-                    className="group shrink-0 w-[240px] sm:w-[280px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                    style={{
-                      background: 'var(--bg-card)',
-                      border: '1px solid var(--border)',
-                      display: 'flex', flexDirection: 'column',
-                      overflow: 'hidden',
-                    }}
-                  >
-                    {/* Header con icono */}
-                    <div 
-                      className="relative aspect-[16/9] overflow-hidden flex items-center justify-center"
-                      style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
-                    >
-                      <span className="text-4xl transform transition-transform duration-500 group-hover:scale-110">
-                        {'icon' in post ? post.icon : '📝'}
-                      </span>
-                    </div>
-                    
-                    {/* Content */}
-                    <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      <h3 
-                        className="line-clamp-2"
-                        style={{
-                          fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.9rem',
-                          margin: 0, color: 'var(--txt)', lineHeight: 1.4,
-                        }}
-                      >
-                        {post.text}
-                      </h3>
-                      {'tag' in post && (
-                        <span 
-                          style={{
-                            display: 'inline-block',
-                            width: 'fit-content',
-                            padding: '2px 8px',
-                            borderRadius: 'var(--radius-full)',
-                            fontSize: '0.65rem',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            background: 'var(--acc-s)',
-                            color: 'var(--acc)',
-                          }}
-                        >
-                          {TAG_LABEL[post.tag] || post.tag}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </XScroll>
-          </div>
-        )}
-
-        <button
-          onClick={() => onNavigate('blog')}
-          style={{
-            marginTop: 32, padding: '12px 28px', background: 'transparent',
-            border: '1px solid var(--border)', borderRadius: 8, fontWeight: 700,
-            fontSize: '0.9rem', color: 'var(--tm)', cursor: 'pointer',
-            transition: 'all 0.3s ease',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--acc)';
-            e.currentTarget.style.color = 'var(--bg)';
-            e.currentTarget.style.borderColor = 'var(--acc)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = 'var(--tm)';
-            e.currentTarget.style.borderColor = 'var(--border)';
-          }}
-        >
-          Leer más artículos
-        </button>
-      </section>
     </>
   );
 }
