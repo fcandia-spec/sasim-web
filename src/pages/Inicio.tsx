@@ -155,21 +155,16 @@ export default function Inicio({ onNavigate }: Props) {
             </XScroll>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <button onClick={() => onNavigate('cursos')} style={{
               padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
               borderRadius: 9, fontWeight: 800, fontSize: '0.95rem',
               boxShadow: '0 4px 20px var(--acc-g)', border: 'none', cursor: 'pointer',
             }}>Explorar cursos</button>
-            <button onClick={() => onNavigate('blog')} style={{
-              padding: '14px 32px', border: '1px solid var(--border)',
-              borderRadius: 9, fontWeight: 700, fontSize: '0.95rem', color: 'var(--tm)',
-              background: 'transparent', cursor: 'pointer',
-            }}>Leer el blog</button>
           </div>
 
-          {/* Scroll horizontal de posts dentro del hero, debajo de los botones */}
-          <div className="mx-auto w-full mt-10">
+          {/* Scroll horizontal de posts dentro del hero, entre los botones */}
+          <div className="mx-auto w-full mt-10 mb-8">
             {loadingPosts ? (
               <div style={{ textAlign: 'center', padding: '24px', color: 'var(--tm)' }}>
                 Cargando posts...
@@ -233,6 +228,14 @@ export default function Inicio({ onNavigate }: Props) {
                 </div>
               </XScroll>
             )}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button onClick={() => onNavigate('blog')} style={{
+              padding: '14px 32px', border: '1px solid var(--border)',
+              borderRadius: 9, fontWeight: 700, fontSize: '0.95rem', color: 'var(--tm)',
+              background: 'transparent', cursor: 'pointer',
+            }}>Leer el blog</button>
           </div>
         </div>
       </section>
