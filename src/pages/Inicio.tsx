@@ -167,6 +167,73 @@ export default function Inicio({ onNavigate }: Props) {
               background: 'transparent', cursor: 'pointer',
             }}>Leer el blog</button>
           </div>
+
+          {/* Scroll horizontal de posts dentro del hero, debajo de los botones */}
+          <div className="mx-auto w-full mt-10">
+            {loadingPosts ? (
+              <div style={{ textAlign: 'center', padding: '24px', color: 'var(--tm)' }}>
+                Cargando posts...
+              </div>
+            ) : (
+              <XScroll>
+                <div className="flex gap-4 p-6">
+                  {(posts.length > 0 ? posts : SAMPLE_POSTS).map(post => (
+                    <div
+                      key={post.id}
+                      onClick={() => onNavigate('blog')}
+                      className="group shrink-0 w-[240px] sm:w-[280px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        display: 'flex', flexDirection: 'column',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {/* Header con icono */}
+                      <div 
+                        className="relative aspect-[16/9] overflow-hidden flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg, var(--acc-s) 0%, rgba(232,168,56,0.08) 100%)' }}
+                      >
+                        <span className="text-4xl transform transition-transform duration-500 group-hover:scale-110">
+                          {'icon' in post ? post.icon : '📝'}
+                        </span>
+                      </div>
+                      
+                      {/* Content */}
+                      <div style={{ padding: 16, flex: 1, display: 'flex', flexDirection: 'column', gap: 8, textAlign: 'left' }}>
+                        <h3 
+                          className="line-clamp-2"
+                          style={{
+                            fontFamily: 'var(--fd)', fontWeight: 700, fontSize: '0.9rem',
+                            margin: 0, color: 'var(--txt)', lineHeight: 1.4,
+                          }}
+                        >
+                          {post.text}
+                        </h3>
+                        {'tag' in post && (
+                          <span 
+                            style={{
+                              display: 'inline-block',
+                              width: 'fit-content',
+                              padding: '2px 8px',
+                              borderRadius: 'var(--radius-full)',
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              background: 'var(--acc-s)',
+                              color: 'var(--acc)',
+                            }}
+                          >
+                            {TAG_LABEL[post.tag] || post.tag}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </XScroll>
+            )}
+          </div>
         </div>
       </section>
 
