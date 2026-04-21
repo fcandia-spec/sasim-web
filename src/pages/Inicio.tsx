@@ -232,9 +232,9 @@ export default function Inicio({ onNavigate }: Props) {
 
           <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
             <button onClick={() => onNavigate('blog')} style={{
-              padding: '14px 32px', border: '1px solid var(--border)',
-              borderRadius: 9, fontWeight: 700, fontSize: '0.95rem', color: 'var(--tm)',
-              background: 'transparent', cursor: 'pointer',
+              padding: '14px 32px', background: 'var(--acc)', color: 'var(--bg)',
+              borderRadius: 9, fontWeight: 800, fontSize: '0.95rem',
+              boxShadow: '0 4px 20px var(--acc-g)', border: 'none', cursor: 'pointer',
             }}>Leer el blog</button>
           </div>
         </div>
