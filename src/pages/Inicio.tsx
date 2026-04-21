@@ -225,7 +225,7 @@ export default function Inicio({ onNavigate }: Props) {
                               color: 'var(--acc)',
                             }}
                           >
-                            {TAG_LABEL[post.tag] || post.tag}
+                            {post.tag ? (TAG_LABEL[post.tag] || post.tag) : ''}
                           </span>
                         )}
                       </div>
