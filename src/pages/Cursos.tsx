@@ -1,7 +1,11 @@
 import { CURSOS } from '@/data/content';
 import { TAG_CLASS, TAG_LABEL } from '@/lib/utils';
 
-export default function Cursos() {
+interface Props {
+  onNavigate: (p: string, id?: string) => void;
+}
+
+export default function Cursos({ onNavigate }: Props) {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '60px 32px 100px' }}>
       <div style={{ marginBottom: 40 }}>
@@ -33,10 +37,14 @@ export default function Cursos() {
                 }} className={tagCls}>{tagLbl}</span>
                 <h3 style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '1.05rem', margin: '6px 0 8px' }}>{c.title}</h3>
                 <p style={{ fontSize: '0.85rem', color: 'var(--tm)', lineHeight: 1.6, marginBottom: 12 }}>{c.desc}</p>
-                <button style={{
-                  padding: '8px 20px', background: 'var(--acc)', color: 'var(--bg)',
-                  borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '0.85rem',
-                }}>Ver curso →</button>
+                <button
+                  onClick={() => onNavigate('curso', c.id)}
+                  style={{
+                    padding: '8px 20px', background: 'var(--acc)', color: 'var(--bg)',
+                    borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '0.85rem',
+                    border: 'none', cursor: 'pointer',
+                  }}
+                >Ver curso →</button>
               </div>
             </div>
           );
