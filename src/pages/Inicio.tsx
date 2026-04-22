@@ -12,7 +12,7 @@ type HeroPost = {
   icon?: string;
 };
 
-interface Props { onNavigate: (p: string) => void; }
+interface Props { onNavigate: (p: string, id?: string) => void; }
 
 // Datos de ejemplo para los cursos más vistos (simularemos estadísticas)
 const cursoStats: Record<string, { students: number; rating: number }> = {
@@ -95,7 +95,7 @@ export default function Inicio({ onNavigate }: Props) {
                   return (
                     <div
                       key={curso.id}
-                      onClick={() => onNavigate('cursos')}
+                      onClick={() => onNavigate('curso', curso.id)}
                       className="group relative shrink-0 w-[180px] sm:w-[220px] rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-xl"
                       style={{
                         background: 'var(--bg-card)',
