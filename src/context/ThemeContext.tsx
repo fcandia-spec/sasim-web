@@ -21,9 +21,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(getSavedTheme);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    document.cookie = `sasim-theme=${theme};path=/;max-age=31536000`;
-  }, [theme]);
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('sasim-theme', theme);
+}, [theme]);
 
   function toggle() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
