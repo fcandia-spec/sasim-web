@@ -14,8 +14,7 @@ const ThemeContext = createContext<ThemeState>({
 });
 
 function getSavedTheme(): Theme {
-  const match = document.cookie.match(/sasim-theme=(\w+)/);
-  return match?.[1] === 'light' ? 'light' : 'dark';
+  return (localStorage.getItem('sasim-theme') as Theme) ?? 'dark';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
