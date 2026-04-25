@@ -29,7 +29,11 @@ export default function App() {
       case 'inicio':       return <Inicio onNavigate={navigate} />;
       case 'cursos':       return <Cursos onNavigate={navigate} />;
       case 'curso':        return <CursoDetalle cursoId={cursoId} onNavigate={navigate} />;
-      case 'blog':         return <Blog />;
+      case 'blog': return (
+  <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Cargando…</div>}>
+    <Blog />
+  </Suspense>
+);
       case 'juegos':       return <Juegos />;
       case 'nosotros':     return <Nosotros />;
       case 'suscribirse':  return <Suscribirse />;
