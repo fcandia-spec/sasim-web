@@ -1,10 +1,6 @@
- // ═══════════════════════════════════════════════════════
-// SASIM — Nav.tsx
-// v3: Sin botón suscribirme, logo con colores fijos
-// ═══════════════════════════════════════════════════════
-
 import { Home, BookOpen, MessageCircle, Gamepad2, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ExpandableTabs } from '@/components/ui/expandable-tabs';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -13,28 +9,35 @@ import ProfileMenu from '@/components/ProfileMenu';
 const NAV_TABS = [
   { id: 'inicio', title: 'Inicio', icon: Home },
   { id: 'cursos', title: 'Cursos', icon: BookOpen },
-  { id: 'blog', title: 'Blog', icon: MessageCircle },
+  { id: 'blog',   title: 'Blog',   icon: MessageCircle },
   { type: 'separator' as const },
-  { id: 'juegos', title: 'Juegos', icon: Gamepad2 },
+  { id: 'juegos',   title: 'Juegos',   icon: Gamepad2 },
   { id: 'nosotros', title: 'Nosotros', icon: Info },
 ];
 
-interface NavProps {
-  page: string;
-  onNavigate: (page: string) => void;
-}
-
-export default function Nav({ page, onNavigate }: NavProps) {
+export default function Nav() {
   const { user, role, signInWithGoogle } = useAuth();
   const { theme, toggle } = useTheme();
   const isDark = theme === 'dark';
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 640);
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' && window.innerWidth < 640
+  );
   useEffect(() => {
     function handleResize() { setIsMobile(window.innerWidth < 640); }
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Deriva el tab activo desde la URL actual
+  const segment = location.pathname.split('/')[1];
+  const activeId = segment || 'inicio';
+
+  function handleTabChange(id: string) {
+    navigate(id === 'inicio' ? '/' : `/${id}`);
+  }
 
   return (
     <nav style={{
@@ -45,10 +48,9 @@ export default function Nav({ page, onNavigate }: NavProps) {
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
       borderBottom: '1px solid var(--border)',
     }}>
-      {/* Logo — colores fijos, no cambian con el tema */}
       <a
-        href="#"
-        onClick={(e) => { e.preventDefault(); onNavigate('inicio'); }}
+        href="/"
+        onClick={(e) => { e.preventDefault(); navigate('/'); }}
         style={{
           display: 'flex', alignItems: 'center', gap: 11,
           fontFamily: 'var(--fd)', fontWeight: 900, fontSize: '0.9rem',
@@ -66,18 +68,15 @@ export default function Nav({ page, onNavigate }: NavProps) {
         <span>SASIM</span>
       </a>
 
-      {/* Tabs */}
       <ExpandableTabs
         tabs={NAV_TABS}
-        activeId={page}
-        onChange={(id: string) => onNavigate(id)}
+        activeId={activeId}
+        onChange={handleTabChange}
       />
 
-      {/* Acciones derecha */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         {user ? (
           <>
-            {/* Badge Admin — solo para admin */}
             {role === 'admin' && (
               <span style={{
                 padding: '3px 10px', borderRadius: 'var(--radius-full)',
@@ -86,13 +85,7 @@ export default function Nav({ page, onNavigate }: NavProps) {
                 letterSpacing: '0.05em', textTransform: 'uppercase',
               }}>Admin</span>
             )}
-
-            {/* Menú de perfil — único botón para usuarios logueados */}
-            <ProfileMenu
-              onNavigate={onNavigate}
-              onToggleTheme={toggle}
-              isDark={isDark}
-            />
+            <ProfileMenu onToggleTheme={toggle} isDark={isDark} />
           </>
         ) : (
           <button
