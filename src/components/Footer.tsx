@@ -1,8 +1,8 @@
-interface FooterProps {
-  onNavigate: (page: string) => void;
-}
+import { useNavigate } from 'react-router-dom';
 
-export default function Footer({ onNavigate }: FooterProps) {
+export default function Footer() {
+  const navigate = useNavigate();
+
   return (
     <footer style={{
       background: 'var(--bg-card)', borderTop: '1px solid var(--border)',
@@ -20,17 +20,20 @@ export default function Footer({ onNavigate }: FooterProps) {
         </div>
         <div>
           <div style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>Explorar</div>
-          {['cursos', 'blog', 'juegos'].map(p => (
-            <a key={p} onClick={() => onNavigate(p)} style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>
-              {p.charAt(0).toUpperCase() + p.slice(1)}
-            </a>
-          ))}
+          {['/cursos', '/blog', '/juegos'].map(path => {
+            const label = path.slice(1);
+            return (
+              <a key={path} onClick={() => navigate(path)} style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>
+                {label.charAt(0).toUpperCase() + label.slice(1)}
+              </a>
+            );
+          })}
         </div>
         <div>
           <div style={{ fontFamily: 'var(--fd)', fontWeight: 800, fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 16 }}>SASIM</div>
-          <a onClick={() => onNavigate('nosotros')} style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>Sobre nosotros</a>
-          <a onClick={() => onNavigate('conocemas')} style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>Políticas y privacidad</a>
-          <a onClick={() => onNavigate('suscribirse')} style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>Planes</a>
+          <a onClick={() => navigate('/nosotros')}   style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>Sobre nosotros</a>
+          <a onClick={() => navigate('/conocemas')}  style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>Políticas y privacidad</a>
+          <a onClick={() => navigate('/suscribirse')} style={{ display: 'block', fontSize: '0.88rem', color: 'var(--tm)', padding: '4px 0', cursor: 'pointer' }}>Planes</a>
         </div>
       </div>
       <div style={{ textAlign: 'center', paddingTop: 24, borderTop: '1px solid var(--border)', fontSize: '0.78rem', color: 'var(--tf)' }}>
