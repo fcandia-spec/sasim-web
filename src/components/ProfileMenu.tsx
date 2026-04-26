@@ -1,25 +1,21 @@
-// ═══════════════════════════════════════════════════════
-// SASIM — ProfileMenu.tsx
-// v3: Sin estrella en suscribirse, logout robusto
-// ═══════════════════════════════════════════════════════
+
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const ROLE_STYLES: Record<string, { label: string; bg: string; color: string; border: string }> = {
   admin: { label: 'Admin', bg: 'rgba(34,197,94,0.2)', color: '#22C55E', border: 'rgba(34,197,94,0.4)' },
   subscriber: { label: 'Suscriptor', bg: 'rgba(34,197,94,0.15)', color: '#22C55E', border: 'rgba(34,197,94,0.3)' },
   visitor: { label: 'Visitante', bg: 'var(--bg-el)', color: 'var(--tm)', border: 'var(--border)' },
 };
-
-interface ProfileMenuProps {
-  onNavigate?: (page: string) => void;
+ interface ProfileMenuProps {
   onToggleTheme?: () => void;
   isDark?: boolean;
 }
-
-export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }: ProfileMenuProps) {
+export default function ProfileMenu({ onToggleTheme, isDark = true }: ProfileMenuProps) {
   const { user, role, signOut } = useAuth();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -48,15 +44,14 @@ export default function ProfileMenu({ onNavigate, onToggleTheme, isDark = true }
   const email = user.email || '';
   const rs = ROLE_STYLES[role] || ROLE_STYLES.visitor;
 
-  function handleAction(action: string) {
+function handleAction(action: string) {
     setIsOpen(false);
     if (action === 'logout') {
-      // signOut ya maneja la recarga de página internamente
       signOut();
     } else if (action === 'theme') {
       onToggleTheme?.();
-    } else if (onNavigate) {
-      onNavigate(action);
+    } else {
+      navigate(`/${action}`);
     }
   }
 
